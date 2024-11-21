@@ -14,6 +14,10 @@ type Config struct {
 		Host string `env:"SERVER_HOST" env-default:"localhost" env-description:"Хост сервера"`
 	}
 
+	Client struct {
+		Host string `env:"CLIENT_HOST" env-default:"localhost" env-description:"Хост клиента"`
+	}
+
 	Database struct {
 		Host                   string `env:"DB_HOST" env-default:"localhost" env-description:"Хост базы данных"`
 		Port                   string `env:"DB_PORT" env-default:"7777" env-description:"Порт базы данных"`
@@ -32,7 +36,7 @@ type Config struct {
 	}
 }
 
-const fNameConfig = "config.env"
+const fNameConfig = ".env"
 
 const (
 	isntExistFileCfg = "файл конфигурации не существует: %s"

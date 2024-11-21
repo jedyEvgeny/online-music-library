@@ -4,6 +4,7 @@ go 1.23.1
 
 require (
 	github.com/golang-migrate/migrate/v4 v4.18.1
+	github.com/google/uuid v1.6.0
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 )
 
