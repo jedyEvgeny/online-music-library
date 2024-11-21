@@ -37,13 +37,13 @@
  ```
 3.3. **Запустите проект в терминале**:
 Если PostgreSQL у вас не установлен, его можно поднять, используя docker и docker-compose из проекта.
-    ```bash
+```bash
    cd cd build
  ```
-    ```bash
+```bash
    docker-compose up -d
  ```
-    ```bash
+```bash
    cd ..
  ```
 
