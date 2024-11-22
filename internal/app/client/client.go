@@ -5,21 +5,26 @@ import (
 	"jedyEvgeny/online-music-library/internal/app/service"
 	"net/http"
 	"net/url"
+	"time"
 )
 
 type Client struct {
-	host   string
-	path   string
-	client http.Client
-	scheme string
+	host           string
+	path           string
+	client         http.Client
+	scheme         string
+	maxRetriesConn int
+	delayConn      int
 }
 
 func New(host, path string) *Client {
 	return &Client{
-		host:   host,
-		path:   path,
-		client: http.Client{},
-		scheme: "http",
+		host:           host,
+		path:           path,
+		client:         http.Client{},
+		scheme:         "http",
+		maxRetriesConn: 3,
+		delayConn:      1,
 	}
 }
 
@@ -36,16 +41,21 @@ func (c *Client) Update(s *service.Song) (*http.Response, error) {
 
 	u.RawQuery = query.Encode()
 
-	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
-	if err != nil {
-		return nil, fmt.Errorf("не смогли создать запрос с URL: %s: %w",
-			u.String(), err)
-	}
+	var resp *http.Response
+	var err error
+	for attemptConn := 1; attemptConn <= c.maxRetriesConn; attemptConn++ {
+		req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+		if err != nil {
+			return nil, fmt.Errorf("не смогли создать запрос с URL: %s: %w",
+				u.String(), err)
+		}
 
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("не удалось связаться с сервером: %w", err)
+		resp, err = c.client.Do(req)
+		if err == nil {
+			return resp, nil
+		}
+		delay := attemptConn * c.delayConn
+		time.Sleep(time.Duration(delay) * time.Second)
 	}
-
-	return resp, nil
+	return nil, fmt.Errorf("не удалось связаться с сервером: %v", err)
 }

@@ -7,18 +7,18 @@ import (
 	"github.com/google/uuid"
 )
 
-type Checker interface {
-	CheckAddSong(*http.Request, string) ([]byte, int)
+type Processor interface {
+	ProseccAddSongRequest(*http.Request, string) ([]byte, int)
 	// CheckGet(*http.Request, string) ([]byte, int)
 }
 
 type Endpoint struct {
-	checkRequest Checker
+	process Processor
 }
 
-func New(c Checker) *Endpoint {
+func New(c Processor) *Endpoint {
 	return &Endpoint{
-		checkRequest: c,
+		process: c,
 	}
 }
 
@@ -32,7 +32,7 @@ func (e *Endpoint) HandlerAddSong(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
-	resp, status := e.checkRequest.CheckAddSong(r, reqID)
+	resp, status := e.process.ProseccAddSongRequest(r, reqID)
 	w.WriteHeader(status)
 	w.Write(resp)
 }

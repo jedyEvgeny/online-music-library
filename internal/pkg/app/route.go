@@ -26,7 +26,7 @@ func newRouteServer() *routeServer {
 
 func newRouteClient() *routeClient {
 	return &routeClient{
-		GetSong: "/get-song",
+		GetSong: "/info",
 	}
 }
 

@@ -1,4 +1,4 @@
-# Wallet Service
+# Онлайн-библиотека музыкальных произведений
 <h3 align="left">    
     <img src="https://img.shields.io/badge/go-%2300ADD8.svg?style=for-the-badge&logo=go&logoColor=white">
     <img src="https://img.shields.io/badge/postgres-%23316192.svg?style=for-the-badge&logo=postgresql&logoColor=white">
@@ -38,7 +38,7 @@
 3.3. **Запустите проект в терминале**:
 Если PostgreSQL у вас не установлен, его можно поднять, используя docker и docker-compose из проекта.
 ```bash
-   cd cd build
+   cd build
  ```
 ```bash
    docker-compose up -d

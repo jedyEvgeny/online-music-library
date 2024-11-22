@@ -8,9 +8,7 @@ import (
 	"time"
 )
 
-func (db *DataBase) Write(song *service.EnrichedSong, requestID string) (int, error) {
-	var groupID, songID int
-
+func (db *DataBase) Write(song *service.EnrichedSong, requestID string) (songID int, err error) {
 	tx, err := db.db.Begin()
 	if err != nil {
 		return 0, fmt.Errorf(errCreateTx, err)
@@ -22,39 +20,62 @@ func (db *DataBase) Write(song *service.EnrichedSong, requestID string) (int, er
 		}
 		commitErr := tx.Commit()
 		if commitErr != nil {
-			err = fmt.Errorf(errCommitTx, err)
+			err = fmt.Errorf(errCommitTx, commitErr)
 		}
 	}()
 
+	groupID, err := db.getOrInsertGroup(tx, song.Group)
+	if err != nil {
+		return 0, err
+	}
+	songID, err = db.insertSong(tx, groupID, song, requestID)
+	if err != nil {
+		return 0, err
+	}
+	return songID, nil
+}
+
+func (db *DataBase) getOrInsertGroup(tx *sql.Tx, group string) (int, error) {
+	var groupID int
 	sqlStmt, err := tx.Prepare(reqSelectGroupID())
 	if err != nil {
 		return 0, fmt.Errorf(errStmt, err)
 	}
-	defer func() { _ = sqlStmt.Close() }()
+	defer sqlStmt.Close()
 
-	err = sqlStmt.QueryRow(song.Group).Scan(&groupID)
+	err = sqlStmt.QueryRow(group).Scan(&groupID)
 	if err != nil && err != sql.ErrNoRows {
 		return 0, fmt.Errorf(errExec, err)
 	}
-
 	if err == sql.ErrNoRows {
-		sqlStmt, err = tx.Prepare(requestInsertGroup())
-		if err != nil {
-			return 0, fmt.Errorf(errStmt, err)
-		}
-		defer func() { _ = sqlStmt.Close() }()
-
-		err = tx.QueryRow(song.Group).Scan(&groupID)
-		if err != nil {
-			return 0, fmt.Errorf(errStmt, err)
-		}
+		return db.insertGroup(tx, group)
 	}
+	return groupID, nil
+}
 
-	sqlStmt, err = tx.Prepare(requestInsertSong())
+func (db *DataBase) insertGroup(tx *sql.Tx, group string) (int, error) {
+	sqlStmt, err := tx.Prepare(requestInsertGroup())
 	if err != nil {
 		return 0, fmt.Errorf(errStmt, err)
 	}
-	defer func() { _ = sqlStmt.Close() }()
+	defer sqlStmt.Close()
+
+	var groupID int
+	err = sqlStmt.QueryRow(group).Scan(&groupID)
+	if err != nil {
+		return 0, fmt.Errorf(errStmt, err)
+	}
+	return groupID, nil
+}
+
+func (db *DataBase) insertSong(tx *sql.Tx, groupID int, song *service.EnrichedSong, requestID string) (int, error) {
+	var songID int
+
+	sqlStmt, err := tx.Prepare(requestInsertSong())
+	if err != nil {
+		return 0, fmt.Errorf(errStmt, err)
+	}
+	defer sqlStmt.Close()
 
 	startInsert := time.Now()
 	err = sqlStmt.QueryRow(
@@ -64,12 +85,10 @@ func (db *DataBase) Write(song *service.EnrichedSong, requestID string) (int, er
 		song.Lyrics,
 		song.Link,
 	).Scan(&songID)
-	endInsert := time.Now()
-
 	if err != nil {
 		return 0, fmt.Errorf(errExec, err)
 	}
+	log.Printf(msgTimeInsert, requestID, time.Since(startInsert))
 
-	log.Printf(msgTimeInsert, requestID, endInsert.Sub(startInsert))
 	return songID, nil
 }
