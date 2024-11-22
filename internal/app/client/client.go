@@ -3,6 +3,7 @@ package client
 import (
 	"fmt"
 	"jedyEvgeny/online-music-library/internal/app/service"
+	"log"
 	"net/http"
 	"net/url"
 	"time"
@@ -17,15 +18,19 @@ type Client struct {
 	delayConn      int
 }
 
-func New(host, path string) *Client {
+func New(host, port, path string) *Client {
 	return &Client{
-		host:           host,
+		host:           createHost(host, port),
 		path:           path,
 		client:         http.Client{},
 		scheme:         "http",
 		maxRetriesConn: 3,
 		delayConn:      1,
 	}
+}
+
+func createHost(h, p string) string {
+	return h + ":" + p
 }
 
 func (c *Client) Update(s *service.Song) (*http.Response, error) {
@@ -49,6 +54,7 @@ func (c *Client) Update(s *service.Song) (*http.Response, error) {
 			return nil, fmt.Errorf("не смогли создать запрос с URL: %s: %w",
 				u.String(), err)
 		}
+		log.Printf("сформирован запрос: %s\n", u.String())
 
 		resp, err = c.client.Do(req)
 		if err == nil {

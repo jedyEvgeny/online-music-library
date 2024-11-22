@@ -23,17 +23,25 @@ type EnrichedSong struct {
 	Link            string `json:"link"`
 }
 
+type ResponseDelete struct {
+	Sucsess    bool   `json:"sucsess"`
+	Message    string `json:"message"`
+	StatusCode int    `json:"statusCode"`
+}
+
 const (
 	msg200 = "Ресурс существует"
 	msg201 = "Ресурс создан"
+	msg204 = "Ресурс в хранилище отсутвует"
 )
 
 const (
-	errMarshalJson    = "ошибка создания json-объекта"
-	errDecodeJson     = "ошибка декодирования json-объекта"
-	errMethod         = "ошибка метода. Ожидался: %s, имеется: %s"
-	errIsNotUUID      = "поле json valletID ожидалось с уникальным UUID. Имеется: %v"
-	errOperation      = "поле json operationType: %s. Ожидалось 'DEPOSIT' или 'WITHDRAW'"
-	errAmount         = "поле json amount должно быть больше нуля. Имеется: %d"
-	errIsNotUUIDInURL = "в URL ожидалось UUID. Имеется: %s"
+	errMarshalJson = "ошибка создания json-объекта: %v"
+	errDecodeJson  = "ошибка декодирования json-объекта"
+	errMethod      = "ошибка метода. Ожидался: %s, имеется: %s"
+	errIsNotUUID   = "поле json valletID ожидалось с уникальным UUID. Имеется: %v"
+	errOperation   = "поле json operationType: %s. Ожидалось 'DEPOSIT' или 'WITHDRAW'"
+	errAmount      = "поле json amount должно быть больше нуля. Имеется: %d"
+	errIDDel       = "не смогли прочитать параметр `s_id` в строке запроса: %w"
+	errIDValueDel  = "`s_id` не должно быть меньше 1. Имеется: %d"
 )

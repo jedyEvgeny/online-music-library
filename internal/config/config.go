@@ -15,7 +15,8 @@ type Config struct {
 	}
 
 	Client struct {
-		Host string `env:"CLIENT_HOST" env-default:"localhost" env-description:"Хост клиента"`
+		Port string `env:"CLIENT_PORT" env-default:"7777" env-description:"Порт стороннего хранилища"`
+		Host string `env:"CLIENT_HOST" env-default:"localhost" env-description:"Хост стороннего хранилища"`
 	}
 
 	Database struct {

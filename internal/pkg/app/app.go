@@ -30,8 +30,8 @@ func New() *App {
 	a.routeClient = newRouteClient()
 	a.routeServer = newRouteServer()
 
-	a.client = client.New(a.cfg.Client.Host, a.routeClient.GetSong)
-	a.service = service.New(a.db, a.client)
+	a.client = client.New(a.cfg.Client.Host, a.cfg.Client.Port, a.routeClient.GetSong)
+	a.service = service.New(a.db, a.client, a.db)
 	a.endpoint = endpoint.New(a.service)
 
 	return a

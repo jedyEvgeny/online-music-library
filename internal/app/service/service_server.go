@@ -8,10 +8,16 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
+	"strconv"
 )
 
 type WriteReader interface {
 	Write(*EnrichedSong, string) (int, error)
+}
+
+type DelUpdater interface {
+	Delete(int, string) error
 }
 
 type Enricher interface {
@@ -19,14 +25,16 @@ type Enricher interface {
 }
 
 type Service struct {
-	writeData WriteReader
-	findData  Enricher
+	writeData     WriteReader
+	findData      Enricher
+	delUpdateData DelUpdater
 }
 
-func New(w WriteReader, e Enricher) *Service {
+func New(w WriteReader, e Enricher, d DelUpdater) *Service {
 	return &Service{
-		writeData: w,
-		findData:  e,
+		writeData:     w,
+		findData:      e,
+		delUpdateData: d,
 	}
 }
 
@@ -39,6 +47,18 @@ func (s *Service) ProseccAddSongRequest(r *http.Request, requestID string) ([]by
 	}
 
 	response, statusCode := s.processAddSong(req, requestID)
+	return response, statusCode
+}
+
+func (s *Service) ProseccDelSongRequest(r *http.Request, requestID string) ([]byte, int) {
+	defer closeRequestBody(r.Body)
+
+	id, statusCode, errResponse := validateDelSongRequest(r, requestID)
+	if statusCode != http.StatusNoContent {
+		return errResponse, statusCode
+	}
+
+	response, statusCode := s.delSongFromStorage(id, requestID)
 	return response, statusCode
 }
 
@@ -131,4 +151,68 @@ func validateBodyAddSongRequest(req *Song) error {
 	}
 
 	return err
+}
+
+func validateDelSongRequest(r *http.Request, requestID string) (int, int, []byte) {
+	if r.Method != http.MethodDelete {
+		msg := fmt.Sprintf(errMethod, http.MethodDelete, r.Method)
+		dataJson, statusCode := createDelSongResponse(
+			false, http.StatusMethodNotAllowed, msg, requestID)
+		return 0, statusCode, dataJson
+	}
+
+	idStr := decodeDelSongRequest(r.URL)
+
+	id, err := validateParamDelSongRequest(idStr)
+	if err != nil {
+		dataJson, statusCode := createDelSongResponse(
+			false, http.StatusBadRequest, fmt.Sprint(err), requestID)
+		return 0, statusCode, dataJson
+	}
+	return id, http.StatusNoContent, nil
+}
+
+func createDelSongResponse(ok bool, statusCode int, msg, requestID string) ([]byte, int) {
+	log.Printf("[%s]  %s\n", requestID, msg)
+	resp := ResponseDelete{
+		Sucsess:    ok,
+		Message:    msg,
+		StatusCode: statusCode,
+	}
+
+	dataJson, err := json.Marshal(resp)
+	if err != nil {
+		log.Printf(errMarshalJson, err)
+		return nil, http.StatusInternalServerError
+	}
+	return dataJson, statusCode
+}
+
+func decodeDelSongRequest(u *url.URL) string {
+	query := u.Query()
+	return query.Get("song_id")
+}
+
+func validateParamDelSongRequest(idStr string) (int, error) {
+	songID, err := strconv.Atoi(idStr)
+	if err != nil {
+		return 0, fmt.Errorf(errIDDel, err)
+	}
+
+	if songID <= 0 {
+		return 0, fmt.Errorf(errIDValueDel, err)
+	}
+	return songID, nil
+}
+
+func (s *Service) delSongFromStorage(id int, requestID string) ([]byte, int) {
+	err := s.delUpdateData.Delete(id, requestID)
+
+	if err != nil {
+		dataJson, statusCode := createDelSongResponse(
+			false, http.StatusInternalServerError, fmt.Sprint(err), requestID)
+		return dataJson, statusCode
+	}
+
+	return nil, http.StatusNoContent
 }

@@ -103,6 +103,6 @@ func (s *Service) saveSongToStorage(req *Song, dataClient *EnrichedSong, request
 		return dataJson, statusCode
 	}
 	dataJson, statusCode := createAddSongResponse(
-		true, http.StatusInternalServerError, msg201, requestID, &idSong)
+		true, http.StatusCreated, msg201, requestID, &idSong)
 	return dataJson, statusCode
 }

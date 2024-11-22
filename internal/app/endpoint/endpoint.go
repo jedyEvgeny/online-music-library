@@ -9,7 +9,7 @@ import (
 
 type Processor interface {
 	ProseccAddSongRequest(*http.Request, string) ([]byte, int)
-	// CheckGet(*http.Request, string) ([]byte, int)
+	ProseccDelSongRequest(*http.Request, string) ([]byte, int)
 }
 
 type Endpoint struct {
@@ -33,6 +33,20 @@ func (e *Endpoint) HandlerAddSong(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
 	resp, status := e.process.ProseccAddSongRequest(r, reqID)
+	w.WriteHeader(status)
+	w.Write(resp)
+}
+
+func (e *Endpoint) HandlerDeleteSong(w http.ResponseWriter, r *http.Request) {
+	reqID := requestID()
+	log.Printf(msgRequest, reqID, r.Method, r.URL)
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	resp, status := e.process.ProseccDelSongRequest(r, reqID)
+	if status == http.StatusNoContent {
+		w.WriteHeader(status)
+		return
+	}
 	w.WriteHeader(status)
 	w.Write(resp)
 }
