@@ -45,6 +45,13 @@ var emulateStorageSongs = []service.EnrichedSong{
 		Link:        "https://www.youtube.com/watch?v=Xsp3_a-PMTw",
 	},
 	{
+		Group:       "Muse",
+		Song:        "test 1",
+		ReleaseDate: "16.07.2006",
+		Lyrics:      "[Verse 1: Matt Bellamy]\\nOoh, baby, don't you know I suffer?\\nOoh, baby, can't you hear me moan?\\nYou caught me under false pretenses\\nHow long before you let me go?\\n\\n[Pre-Chorus: Matt Bellamy]\\nOoh, you set my soul alight\\nOoh, you set my soul alight\\n\\n[Chorus: Matt Bellamy, Chris Wolstenholme, Dom Howard]\\nGlaciers melting in the dead of night (Ooh)\\nAnd the superstar's sucked into the supermassive (You set my soul alight)\\nGlaciers melting in the dead of night (Ooh)\\nAnd the superstar's sucked into the (You set my soul)",
+		Link:        "https://www.youtube.com/watch?v=Xsp3_a-PMTw",
+	},
+	{
 		Group:       "Nirvana",
 		Song:        "Smells Like Teen Spirit",
 		ReleaseDate: "10.09.1991",

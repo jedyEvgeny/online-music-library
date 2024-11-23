@@ -118,7 +118,7 @@ func (db *DataBase) updateSongToInitState(tx *sql.Tx, id int, song *service.Enri
 	}
 	defer func() { _ = sqlStmt.Close() }()
 
-	_, err = sqlStmt.Exec(song.ReleaseDateTime, song.Lyrics, song.Link, id)
+	_, err = sqlStmt.Exec(song.ReleaseDate, song.Lyrics, song.Link, id)
 	if err != nil {
 		return fmt.Errorf(errExec, err)
 	}
@@ -139,7 +139,7 @@ func (db *DataBase) addSong(tx *sql.Tx, groupID int, song *service.EnrichedSong,
 	err = sqlStmt.QueryRow(
 		groupID,
 		song.Song,
-		song.ReleaseDateTime,
+		song.ReleaseDate,
 		song.Lyrics,
 		song.Link,
 	).Scan(&songID)

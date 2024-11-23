@@ -12,6 +12,12 @@ import (
 	"strings"
 )
 
+const (
+	Group       = "group"
+	Composition = "song"
+	ReleaseDate = "releaseDate"
+)
+
 func (s *Service) ProcessLibraryRequest(r *http.Request, requestID string) ([]byte, int) {
 	defer closeRequestBody(r.Body)
 
@@ -23,6 +29,7 @@ func (s *Service) ProcessLibraryRequest(r *http.Request, requestID string) ([]by
 	}
 
 	songs, statusCode, err := s.repository.ReadLibrary(reqParam, requestID)
+	log.Printf("Ответ БД. Статус: %d, ошибка: %v\n", statusCode, err)
 	if err != nil {
 		dataJson, statusCode := createLibraryResponse(
 			false, statusCode, fmt.Sprint(err), requestID, nil)
@@ -92,7 +99,7 @@ func (f *FilterAndPaggination) validateAndFillLibraryParamsRequest() error {
 	if f.filter != "" {
 		filterMap, err = validateAndReturnFilterMap(f.filter)
 		if err != nil {
-			buf.WriteString(fmt.Sprintf("не валидный фильтр. Имеется: %s", f.filter))
+			buf.WriteString(fmt.Sprintf("ошибка: %vне валидный фильтр. Имеется: %s", err, f.filter))
 		}
 	}
 
@@ -126,13 +133,15 @@ func (f *FilterAndPaggination) validateAndFillLibraryParamsRequest() error {
 }
 
 func validateAndReturnFilterMap(filter string) (map[string]interface{}, error) {
-	splits := strings.Split(filter, ".")
+	splits := strings.SplitAfterN(filter, ".", 2)
+	splits[0] = strings.TrimSuffix(splits[0], ".")
 	if len(splits) != 2 {
-		return nil, errors.New("невалидный разделитель фильтра. Ожидался формат`поле.фильтр`")
+		return nil, fmt.Errorf("невалидный разделитель фильтра. Ожидался формат`поле.фильтр` с двумя элементами. Имеется количество элементов: %d", len(splits))
 	}
 	field, value := splits[0], splits[1]
-	if field != "group" && field != "song" && field != "release_date" {
-		return nil, fmt.Errorf("невалидное поле фильтра. Ожидалось `group/song/release_date`. Имеется: %s", field)
+	if field != Group && field != Composition && field != ReleaseDate {
+		return nil, fmt.Errorf("невалидное поле фильтра. Ожидалось `%s/%s/%s`. Имеется: %s",
+			Group, Composition, ReleaseDate, field)
 	}
 
 	return map[string]interface{}{field: value}, nil

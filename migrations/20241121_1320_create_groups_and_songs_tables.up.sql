@@ -10,7 +10,7 @@ CREATE TABLE songs (
     s_id SERIAL PRIMARY KEY,
     group_id INT NOT NULL REFERENCES music_groups(g_id) ON DELETE CASCADE,
     song TEXT NOT NULL,
-    release_date DATE NOT NULL,
+    release_date TEXT NULL,
     lyrics TEXT NOT NULL,
     link TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),

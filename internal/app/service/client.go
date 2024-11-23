@@ -84,13 +84,8 @@ func validateEnrichedSongFields(resp *EnrichedSong) error {
 }
 
 func enrichSongData(s *Song, e *EnrichedSong) *EnrichedSong {
-	const (
-		layout = "02.01.2006"
-	)
-	parsedDate, _ := time.Parse(layout, e.ReleaseDate)
 	e.Group = s.Group
 	e.Song = s.Song
-	e.ReleaseDateTime = parsedDate
 	return e
 }
 

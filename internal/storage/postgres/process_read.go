@@ -81,7 +81,7 @@ func (db *DataBase) findLirycsBySongID(tx *sql.Tx, songID int, requestID string)
 }
 
 func (db *DataBase) findSongsByFilter(tx *sql.Tx, f *service.FilterAndPaggination, requestID string) (*[]service.EnrichedSong, int, error) {
-	query, argFilter := createQuery(f)
+	query, arg := createQuery(f)
 
 	sqlStmt, err := tx.Prepare(query)
 	if err != nil {
@@ -89,11 +89,7 @@ func (db *DataBase) findSongsByFilter(tx *sql.Tx, f *service.FilterAndPagginatio
 	}
 	defer func() { _ = sqlStmt.Close() }()
 
-	rows, err := sqlStmt.Query(
-		argFilter[0],
-		f.Limit,
-		f.Offset,
-	)
+	rows, err := sqlStmt.Query(arg, f.Limit, f.Offset)
 	if err != nil {
 		return nil, http.StatusInternalServerError, fmt.Errorf(errExec, err)
 	}
@@ -112,57 +108,43 @@ func (db *DataBase) findSongsByFilter(tx *sql.Tx, f *service.FilterAndPagginatio
 	if err := rows.Err(); err != nil {
 		return nil, http.StatusInternalServerError, fmt.Errorf(errRead, err)
 	}
+	if len(songs) == 0 {
+		return nil, http.StatusNotFound, fmt.Errorf(errNoContent, err)
+	}
 
 	return &songs, http.StatusOK, nil
 }
 
-// func createQuery(f *service.FilterAndPaggination) (string, interface{}) {
-// 	var args interface{}
-// 	var condition string
-
-// 	if len(f.Filter) == 1 {
-// 		for key, value := range f.Filter {
-// 			condition = fmt.Sprintf("s.%s = $1", key)
-// 			args = value
-// 		}
-// 	}
-// 	condition = fmt.Sprintf(" WHERE %s ORDER BY %s LIMIT $2 OFFSET $3",
-// 		condition, f.SortBy)
-
-// 	query := requestSelectSongsByFilter(condition)
-
-// 	return query, args
-// }
-
-func createQuery(f *service.FilterAndPaggination) (string, []interface{}) {
-	var args []interface{} // Срез для хранения всех аргументов
+func createQuery(f *service.FilterAndPaggination) (string, interface{}) {
+	var args interface{}
 	var condition string
 
 	if len(f.Filter) == 1 {
 		for key, value := range f.Filter {
-			condition = fmt.Sprintf("s.%s = $1", key)
-			args = append(args, value) // добавляем фильтр в args
+			prefix := "s"
+			switch key {
+			case service.Group:
+				key = "name"
+				prefix = "mg"
+			case service.ReleaseDate:
+				key = "release_date"
+			}
+
+			condition = fmt.Sprintf("%s.%s = $1", prefix, key)
+
+			args = value
 		}
 	}
 
-	// Проверяем, если condition пустая
 	if condition != "" {
 		condition = fmt.Sprintf(" WHERE %s", condition)
 	}
 
-	// Проверяем значение SortBy
-	if f.SortBy != "asc" && f.SortBy != "desc" {
-		f.SortBy = "asc" // Устанавливаем значение по умолчанию
-	}
+	// Доработать сортировку по ключу
+	// orderBy := fmt.Sprintf(" ORDER BY s.song %s", f.SortBy)
+	// query := requestSelectSongsByFilter(condition) + orderBy + " LIMIT $2 OFFSET $3"
 
-	// Формирование ORDER BY
-	orderBy := fmt.Sprintf(" ORDER BY s.song %s", f.SortBy)
-
-	// Формируем запрос
-	query := requestSelectSongsByFilter(condition) + orderBy + " LIMIT $2 OFFSET $3"
-
-	// Добавляем LIMIT и OFFSET в args
-	args = append(args, f.Limit, f.Offset)
+	query := requestSelectSongsByFilter(fmt.Sprintf("%s  LIMIT $2 OFFSET $3", condition))
 
 	return query, args
 }

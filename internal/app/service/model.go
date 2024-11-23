@@ -1,7 +1,5 @@
 package service
 
-import "time"
-
 type Song struct {
 	Group string `json:"group"`
 	Song  string `json:"song"`
@@ -15,12 +13,11 @@ type ResponsePost struct {
 }
 
 type EnrichedSong struct {
-	Group           string `json:"group"`
-	Song            string `json:"song"`
-	ReleaseDate     string `json:"releaseDate"`
-	ReleaseDateTime time.Time
-	Lyrics          string `json:"text"`
-	Link            string `json:"link"`
+	Group       string `json:"group"`
+	Song        string `json:"song"`
+	ReleaseDate string `json:"releaseDate"`
+	Lyrics      string `json:"text"`
+	Link        string `json:"link"`
 }
 
 type ResponseDelete struct {
