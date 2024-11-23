@@ -12,32 +12,6 @@ import (
 	"strconv"
 )
 
-type WriteReader interface {
-	Write(*EnrichedSong, string) (int, error)
-}
-
-type DelUpdater interface {
-	Delete(int, string) error
-}
-
-type Enricher interface {
-	Update(*Song) (*http.Response, error)
-}
-
-type Service struct {
-	writeData     WriteReader
-	findData      Enricher
-	delUpdateData DelUpdater
-}
-
-func New(w WriteReader, e Enricher, d DelUpdater) *Service {
-	return &Service{
-		writeData:     w,
-		findData:      e,
-		delUpdateData: d,
-	}
-}
-
 func (s *Service) ProseccAddSongRequest(r *http.Request, requestID string) ([]byte, int) {
 	defer closeRequestBody(r.Body)
 
@@ -103,7 +77,7 @@ func createAddSongResponse(ok bool, statusCode int, msg, requestID string, id *i
 	}
 	dataJson, err := json.Marshal(resp)
 	if err != nil {
-		log.Println(errMarshalJson)
+		log.Printf(errMarshalJson, err)
 		return nil, http.StatusInternalServerError
 	}
 	return dataJson, statusCode
@@ -206,7 +180,7 @@ func validateParamDelSongRequest(idStr string) (int, error) {
 }
 
 func (s *Service) delSongFromStorage(id int, requestID string) ([]byte, int) {
-	err := s.delUpdateData.Delete(id, requestID)
+	err := s.delUpdater.Delete(id, requestID)
 
 	if err != nil {
 		dataJson, statusCode := createDelSongResponse(

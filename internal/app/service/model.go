@@ -29,6 +29,39 @@ type ResponseDelete struct {
 	StatusCode int    `json:"statusCode"`
 }
 
+type ResponseLirycs struct {
+	Sucsess    bool     `json:"sucsess"`
+	Message    string   `json:"message"`
+	StatusCode int      `json:"statusCode"`
+	Lirycs     []string `json:"lirycs,omitempty"`
+}
+
+type ResponseLibrary struct {
+	Sucsess    bool           `json:"sucsess"`
+	Message    string         `json:"message"`
+	StatusCode int            `json:"statusCode"`
+	Library    []EnrichedSong `json:"library,omitempty"`
+}
+
+type FilterAndPaggination struct {
+	SortBy    string
+	Filter    map[string]interface{}
+	Offset    int
+	Limit     int
+	filter    string
+	offsetStr string
+	limitStr  string
+}
+
+type paggination struct {
+	offsetStr string
+	limitStr  string
+	idSongStr string
+	offset    int
+	limit     int
+	idSong    int
+}
+
 const (
 	msg200 = "Ресурс существует"
 	msg201 = "Ресурс создан"

@@ -46,7 +46,6 @@ func (c *Client) Update(s *service.Song) (*http.Response, error) {
 
 	u.RawQuery = query.Encode()
 
-	var resp *http.Response
 	var err error
 	for attemptConn := 1; attemptConn <= c.maxRetriesConn; attemptConn++ {
 		req, err := http.NewRequest(http.MethodGet, u.String(), nil)
@@ -56,12 +55,25 @@ func (c *Client) Update(s *service.Song) (*http.Response, error) {
 		}
 		log.Printf("сформирован запрос: %s\n", u.String())
 
-		resp, err = c.client.Do(req)
-		if err == nil {
-			return resp, nil
+		resp, err := c.client.Do(req)
+		if err != nil {
+			log.Printf("Ошибка выполнения запроса: %v", err)
+
+			delay := attemptConn * c.delayConn
+			time.Sleep(time.Duration(delay) * time.Second)
+			continue
 		}
-		delay := attemptConn * c.delayConn
-		time.Sleep(time.Duration(delay) * time.Second)
+
+		switch resp.StatusCode {
+		case http.StatusOK:
+			return resp, nil
+		case http.StatusNotFound:
+			return nil, fmt.Errorf("ресурс в стороннем хранилище не найден, код ответа: %d", resp.StatusCode)
+		case http.StatusInternalServerError:
+			return nil, fmt.Errorf("внутренняя ошибка сервера, код ответа: %d", resp.StatusCode)
+		default:
+			return nil, fmt.Errorf("неизвестный ответ сервера: %s", resp.Status)
+		}
 	}
 	return nil, fmt.Errorf("не удалось связаться с сервером: %v", err)
 }

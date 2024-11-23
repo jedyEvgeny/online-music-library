@@ -48,3 +48,17 @@ func requestDeleteSong() string {
 	WHERE s_id = $1
 	`
 }
+
+func requestSelectLirycsBySongID() string {
+	return `
+	SELECT lyrics
+	FROM songs
+	WHERE s_id = $1
+	`
+}
+
+func requestSelectSongsByFilter(condition string) string {
+	return `SELECT s.song, s.release_date, s.lyrics, s.link, mg.name 
+            FROM songs s 
+            JOIN music_groups mg ON s.group_id = mg.g_id` + condition
+}

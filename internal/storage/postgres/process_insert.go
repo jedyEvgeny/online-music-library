@@ -24,12 +24,12 @@ func (db *DataBase) Write(song *service.EnrichedSong, requestID string) (songID 
 		}
 	}()
 
-	groupID, err := db.getOrInsertGroup(tx, song.Group)
+	groupID, err := db.getOrCreateGroup(tx, song.Group)
 	if err != nil {
 		return 0, err
 	}
 
-	songID, err = db.findSongID(tx, groupID, song, requestID)
+	songID, err = db.findOrInsertSongID(tx, groupID, song, requestID)
 	if err != nil {
 		return 0, err
 	}
@@ -37,31 +37,7 @@ func (db *DataBase) Write(song *service.EnrichedSong, requestID string) (songID 
 	return songID, nil
 }
 
-func (db *DataBase) Delete(id int, requestID string) (err error) {
-	tx, err := db.db.Begin()
-	if err != nil {
-		return fmt.Errorf(errCreateTx, err)
-	}
-	defer func() {
-		if err != nil {
-			_ = tx.Rollback()
-			return
-		}
-		commitErr := tx.Commit()
-		if commitErr != nil {
-			err = fmt.Errorf(errCommitTx, commitErr)
-		}
-	}()
-
-	err = deleteSong(tx, id, requestID)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (db *DataBase) getOrInsertGroup(tx *sql.Tx, group string) (int, error) {
+func (db *DataBase) getOrCreateGroup(tx *sql.Tx, group string) (int, error) {
 	var groupID int
 	sqlStmt, err := tx.Prepare(requestSelectGroupID())
 	if err != nil {
@@ -74,25 +50,25 @@ func (db *DataBase) getOrInsertGroup(tx *sql.Tx, group string) (int, error) {
 		return 0, fmt.Errorf(errExec, err)
 	}
 	if err == sql.ErrNoRows {
-		return db.insertGroup(tx, group)
+		return db.createGroup(tx, group)
 	}
 	return groupID, nil
 }
 
-func (db *DataBase) findSongID(tx *sql.Tx, groupID int, song *service.EnrichedSong, requestID string) (int, error) {
+func (db *DataBase) findOrInsertSongID(tx *sql.Tx, groupID int, song *service.EnrichedSong, requestID string) (int, error) {
 	var songID int
-	existingSongID, err := db.SongID(tx, groupID, song.Song)
+	existingSongID, err := db.findSongIdByGroupID(tx, groupID, song.Song)
 	if err != nil {
 		return 0, err
 	}
 	if existingSongID == 0 {
-		songID, err = db.insertSong(tx, groupID, song, requestID)
+		songID, err = db.addSong(tx, groupID, song, requestID)
 		if err != nil {
 			return 0, err
 		}
 	}
 	if existingSongID != 0 {
-		err = db.updateSong(tx, existingSongID, song)
+		err = db.updateSongToInitState(tx, existingSongID, song)
 		if err != nil {
 			return 0, err
 		}
@@ -101,7 +77,7 @@ func (db *DataBase) findSongID(tx *sql.Tx, groupID int, song *service.EnrichedSo
 	return songID, nil
 }
 
-func (db *DataBase) insertGroup(tx *sql.Tx, group string) (int, error) {
+func (db *DataBase) createGroup(tx *sql.Tx, group string) (int, error) {
 	sqlStmt, err := tx.Prepare(requestInsertGroup())
 	if err != nil {
 		return 0, fmt.Errorf(errStmt, err)
@@ -116,7 +92,7 @@ func (db *DataBase) insertGroup(tx *sql.Tx, group string) (int, error) {
 	return groupID, nil
 }
 
-func (db *DataBase) SongID(tx *sql.Tx, groupID int, songName string) (int, error) {
+func (db *DataBase) findSongIdByGroupID(tx *sql.Tx, groupID int, songName string) (int, error) {
 	var songID int
 	sqlStmt, err := tx.Prepare(selectSongByGroup())
 	if err != nil {
@@ -135,7 +111,7 @@ func (db *DataBase) SongID(tx *sql.Tx, groupID int, songName string) (int, error
 	return songID, nil
 }
 
-func (db *DataBase) updateSong(tx *sql.Tx, id int, song *service.EnrichedSong) error {
+func (db *DataBase) updateSongToInitState(tx *sql.Tx, id int, song *service.EnrichedSong) error {
 	sqlStmt, err := tx.Prepare(reqUpdateSongToinitState())
 	if err != nil {
 		return fmt.Errorf(errStmt, err)
@@ -150,7 +126,7 @@ func (db *DataBase) updateSong(tx *sql.Tx, id int, song *service.EnrichedSong) e
 	return nil
 }
 
-func (db *DataBase) insertSong(tx *sql.Tx, groupID int, song *service.EnrichedSong, requestID string) (int, error) {
+func (db *DataBase) addSong(tx *sql.Tx, groupID int, song *service.EnrichedSong, requestID string) (int, error) {
 	var songID int
 
 	sqlStmt, err := tx.Prepare(requestInsertSong())
@@ -173,28 +149,4 @@ func (db *DataBase) insertSong(tx *sql.Tx, groupID int, song *service.EnrichedSo
 	log.Printf(msgTimeInsert, requestID, time.Since(startInsert))
 
 	return songID, nil
-}
-
-func deleteSong(tx *sql.Tx, id int, requestID string) error {
-	sqlStmt, err := tx.Prepare(requestDeleteSong())
-	if err != nil {
-		return fmt.Errorf(errStmt, err)
-	}
-	defer func() { _ = sqlStmt.Close() }()
-
-	result, err := sqlStmt.Exec(id)
-	if err != nil {
-		return fmt.Errorf(errExec, err)
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf(errRes, err)
-	}
-
-	if rowsAffected == 0 {
-		log.Printf(msgResAffected, requestID, id)
-	}
-
-	return nil
 }

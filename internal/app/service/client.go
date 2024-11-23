@@ -22,7 +22,7 @@ func (s *Service) processAddSong(req *Song, requestID string) ([]byte, int) {
 }
 
 func (s *Service) enrighedSong(req *Song, requestID string) (*EnrichedSong, int, []byte) {
-	dataRespClient, err := s.findData.Update(req)
+	dataRespClient, err := s.enricher.Update(req)
 	if err != nil {
 		dataJson, statusCode := createAddSongResponse(
 			false, http.StatusInternalServerError, fmt.Sprint(err), requestID, nil)
@@ -97,7 +97,7 @@ func enrichSongData(s *Song, e *EnrichedSong) *EnrichedSong {
 func (s *Service) saveSongToStorage(req *Song, dataClient *EnrichedSong, requestID string) ([]byte, int) {
 	enrichedData := enrichSongData(req, dataClient)
 
-	idSong, err := s.writeData.Write(enrichedData, requestID)
+	idSong, err := s.repository.Write(enrichedData, requestID)
 	if err != nil {
 		dataJson, statusCode := createAddSongResponse(false, http.StatusInternalServerError, fmt.Sprint(err), requestID, nil)
 		return dataJson, statusCode

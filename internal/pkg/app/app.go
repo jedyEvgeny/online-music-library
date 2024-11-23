@@ -32,7 +32,7 @@ func New() *App {
 
 	a.client = client.New(a.cfg.Client.Host, a.cfg.Client.Port, a.routeClient.GetSong)
 	a.service = service.New(a.db, a.client, a.db)
-	a.endpoint = endpoint.New(a.service)
+	a.endpoint = endpoint.New(a.service, a.service)
 
 	return a
 }
