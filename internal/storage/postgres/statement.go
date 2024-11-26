@@ -1,10 +1,18 @@
 package storage
 
-func requestSelectGroupID() string {
+func requestSelectGroupIdByGroupName() string {
 	return `
 	SELECT g_id 
 	FROM music_groups 
 	WHERE name=$1
+	`
+}
+
+func requestSelectGroupIdBySongID() string {
+	return `
+	SELECT group_id 
+	FROM songs
+	WHERE s_id=$1
 	`
 }
 
@@ -63,12 +71,13 @@ func requestSelectSongsByFilter(condition string) string {
             JOIN music_groups mg ON s.group_id = mg.g_id` + condition
 }
 
-func requestSelectGroupBySong() string {
-	return `
-	SELECT group_id 
-	FROM songs 
-	WHERE s_id = $1`
-}
+// func requestSelectGroupIdByGroupName() string {
+// 	return `
+// 	SELECT g_id
+// 	FROM music_groups
+// 	WHERE name = $1
+// 	`
+// }
 
 func requestSelectCountSongsByGroup() string {
 	return `
@@ -92,4 +101,11 @@ func requestUpdateGroupForSingleSongBySuchGroup() string {
 	SET name = $1 
 	WHERE g_id = $2
 	`
+}
+
+func requestSelectSongID() string {
+	return `
+	SELECT COUNT(*)
+	FROM songs 
+	WHERE s_id = $1`
 }

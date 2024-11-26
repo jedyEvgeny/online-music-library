@@ -36,23 +36,27 @@ func (db *DataBase) Update(song *service.EnrichedSong, songID int, requestID str
 }
 
 func (db *DataBase) checkSong(tx *sql.Tx, e *service.EnrichedSong, songID int, requestID string) error {
-	groupIDInMusicGroupsTable, err := db.findGroupID(tx, e.Group)
+	fmt.Println("выполняем checkSong")
+
+	currGroupID, err := db.findGroupID(tx, songID)
+	if err != nil {
+		return err
+	}
+	fmt.Println("выполнили currGroup без ошибки")
+
+	groupIdLikeGroupInNewSong, err := db.findExistGroupIdLikeNewGroup(tx, e.Group, requestID)
 	if err != nil {
 		return fmt.Errorf(errNoContent, err)
 	}
+	fmt.Println("выполнили groupIdLikeGroupInNewSong без ошибки")
 
-	groupIDInSongTable, err := db.isExistingSong(tx, songID, requestID)
-	if err != nil {
-		return fmt.Errorf(errNoContent, err)
-	}
-
-	foundMoreTwoSongsByCurrGroup, err := db.isMoreThenTwoSongsCurrGroup(tx, groupIDInSongTable, requestID)
+	foundMoreThanOneSongForCurrGroup, err := db.hasMoreThanOneSongForCurrGroup(tx, currGroupID, requestID)
 	if err != nil {
 		return fmt.Errorf(errNoContent, err)
 	}
 
 	if e.Group != "" {
-		err = updGroup(tx, e, foundMoreTwoSongsByCurrGroup, groupIDInMusicGroupsTable, groupIDInSongTable, songID)
+		err = updGroup(tx, e, foundMoreThanOneSongForCurrGroup, currGroupID, songID, groupIdLikeGroupInNewSong)
 		if err != nil {
 			return err
 		}
@@ -69,39 +73,65 @@ func (db *DataBase) checkSong(tx *sql.Tx, e *service.EnrichedSong, songID int, r
 	return nil
 }
 
-func (db *DataBase) findGroupID(tx *sql.Tx, group string) (int, error) {
-	var groupIDInMusicGroupsTable int
-	sqlStmt, err := tx.Prepare(requestSelectGroupID())
+func findSongIdBySongID(tx *sql.Tx, songID int) error {
+	sqlStmt, err := tx.Prepare(requestSelectSongID())
+	if err != nil {
+		return fmt.Errorf(errStmt, err)
+	}
+	defer func() { _ = sqlStmt.Close() }()
+
+	var countID int
+	err = sqlStmt.QueryRow(songID).Scan(&countID)
+	if err != nil {
+		return fmt.Errorf(errExec, err)
+	}
+	if countID == 0 {
+		return fmt.Errorf(errNoContent)
+	}
+	return nil
+}
+
+// findGroupID возвращает id группы из таблицы songs
+// и косвенно проверяет, существует ли переданный songID
+func (db *DataBase) findGroupID(tx *sql.Tx, songID int) (int, error) {
+	var currGroupID int
+
+	sqlStmt, err := tx.Prepare(requestSelectGroupIdBySongID())
 	if err != nil {
 		return 0, fmt.Errorf(errStmt, err)
 	}
 	defer func() { _ = sqlStmt.Close() }()
 
-	err = sqlStmt.QueryRow(group).Scan(&groupIDInMusicGroupsTable)
-	if err != nil && err != sql.ErrNoRows {
+	err = sqlStmt.QueryRow(songID).Scan(&currGroupID)
+	if err != nil {
 		return 0, fmt.Errorf(errExec, err)
 	}
 
-	return groupIDInMusicGroupsTable, nil
+	return currGroupID, nil
 }
 
-func (db *DataBase) isExistingSong(tx *sql.Tx, songID int, requestID string) (int, error) {
-	var groupIDInSongTable int
-	sqlStmt, err := tx.Prepare(requestSelectGroupBySong())
+func (db *DataBase) findExistGroupIdLikeNewGroup(tx *sql.Tx, group, requestID string) (int, error) {
+	var groupIdLikeGroupInNewSong int
+
+	sqlStmt, err := tx.Prepare(requestSelectGroupIdByGroupName())
 	if err != nil {
 		return 0, fmt.Errorf(errStmt, err)
 	}
 	defer func() { _ = sqlStmt.Close() }()
 
-	err = sqlStmt.QueryRow(songID).Scan(&groupIDInSongTable)
+	err = sqlStmt.QueryRow(group).Scan(&groupIdLikeGroupInNewSong)
+	if err == sql.ErrNoRows {
+		return 0, nil
+	}
 	if err != nil {
 		return 0, fmt.Errorf(errExec, err)
 	}
-	return groupIDInSongTable, nil
+	return groupIdLikeGroupInNewSong, nil
 }
 
-func (db *DataBase) isMoreThenTwoSongsCurrGroup(tx *sql.Tx, groupID int, requestID string) (bool, error) {
+func (db *DataBase) hasMoreThanOneSongForCurrGroup(tx *sql.Tx, groupID int, requestID string) (bool, error) {
 	var songCount int
+
 	sqlStmt, err := tx.Prepare(requestSelectCountSongsByGroup())
 	if err != nil {
 		return false, fmt.Errorf(errStmt, err)
@@ -112,31 +142,37 @@ func (db *DataBase) isMoreThenTwoSongsCurrGroup(tx *sql.Tx, groupID int, request
 	if err != nil {
 		return false, fmt.Errorf(errExec, err)
 	}
+
 	if songCount == 1 {
 		return false, nil
 	}
+
 	return true, nil
 }
 
-func updGroup(tx *sql.Tx, e *service.EnrichedSong, foundMoreTwoSongsByCurrGroup bool, groupIDInMusicGroupsTable, groupIDInSongTable, songID int) error {
-	//Если ранее не было нового исполнителя имеющейся композиции,
-	//Но есть другие композиции имеющегося исполнителя
-	if groupIDInMusicGroupsTable == 0 && foundMoreTwoSongsByCurrGroup {
-		err := createGroup(tx, e, groupIDInMusicGroupsTable)
+func updGroup(tx *sql.Tx, e *service.EnrichedSong, foundMoreTwoSongsByCurrGroup bool, groupID, songID, groupIdLikeGroupInNewSong int) error {
+	//fmt.Println("Выполняем updGround")
+
+	//Случай, когда новой группы нет в таблице music_groups, но есть больше 1 песни у старой группы или
+	//Случай, когда у существующей группы больше 2х песен и новой группы нет в БД
+	if (!foundMoreTwoSongsByCurrGroup && groupIdLikeGroupInNewSong == 0) ||
+		(foundMoreTwoSongsByCurrGroup && groupIdLikeGroupInNewSong == 0) {
+		newGroupID, err := createNewGroup(tx, e)
 		if err != nil {
 			return err
 		}
 
-		err = updGroupIdInSongsBySongID(tx, groupIDInMusicGroupsTable, songID)
+		err = updGroupIdInSongsBySongID(tx, newGroupID, songID)
 		if err != nil {
 			return err
 		}
 	}
 
-	//Если ранее не было нового исполнителя имеющейся композиции,
-	//и нет других композиций имеющегося исполнителя
-	if groupIDInMusicGroupsTable == 0 && !foundMoreTwoSongsByCurrGroup {
-		err := updateGroupForSingleSongBySuchGroup(tx, e, groupIDInMusicGroupsTable)
+	//Случай, когда у существующей группы одна песня, но новая группа уже есть в БД или
+	//Случай, когда у существующей группы больше 2х песен и новая группа есть в БД
+	if (!foundMoreTwoSongsByCurrGroup && groupIdLikeGroupInNewSong != 0) ||
+		(foundMoreTwoSongsByCurrGroup && groupIdLikeGroupInNewSong != 0) {
+		err := updGroupIdInSongsBySongID(tx, groupIdLikeGroupInNewSong, songID)
 		if err != nil {
 			return err
 		}
@@ -145,21 +181,24 @@ func updGroup(tx *sql.Tx, e *service.EnrichedSong, foundMoreTwoSongsByCurrGroup 
 	return nil
 }
 
-func createGroup(tx *sql.Tx, e *service.EnrichedSong, groupIDInMusicGroupsTable int) error {
+func createNewGroup(tx *sql.Tx, e *service.EnrichedSong) (int, error) {
 	sqlStmt, err := tx.Prepare(requestInsertGroup())
 	if err != nil {
-		return fmt.Errorf(errExec, err)
+		return 0, fmt.Errorf(errExec, err)
 	}
 	defer func() { _ = sqlStmt.Close() }()
 
-	err = sqlStmt.QueryRow(e.Group).Scan(&groupIDInMusicGroupsTable)
+	var newGroupID int
+
+	err = sqlStmt.QueryRow(e.Group).Scan(&newGroupID)
 	if err != nil {
-		return err
+		return 0, fmt.Errorf(errExec, err)
 	}
-	return nil
+
+	return newGroupID, nil
 }
 
-func updGroupIdInSongsBySongID(tx *sql.Tx, groupIDInMusicGroupsTable, songID int) error {
+func updGroupIdInSongsBySongID(tx *sql.Tx, newGroupID, songID int) error {
 	sqlStmt, err := tx.Prepare(requestUpdateGroupIdInSongsBySongID())
 	if err != nil {
 		return fmt.Errorf(errExec, err)
@@ -167,7 +206,7 @@ func updGroupIdInSongsBySongID(tx *sql.Tx, groupIDInMusicGroupsTable, songID int
 	defer func() { _ = sqlStmt.Close() }()
 
 	_, err = sqlStmt.Exec(
-		groupIDInMusicGroupsTable,
+		newGroupID,
 		songID,
 	)
 	if err != nil {
