@@ -1,0 +1,188 @@
+basePath: /
+consumes:
+- application/json
+definitions:
+  endpoint.ResponseDel400:
+    properties:
+      message:
+        example: не смогли прочитать параметр запроса
+        type: string
+      statusCode:
+        example: 400
+        type: integer
+      sucsess:
+        example: false
+        type: boolean
+    type: object
+  endpoint.ResponseDel405:
+    properties:
+      message:
+        example: 'ошибка метода. Ожидался: DELETE, имеется: POST'
+        type: string
+      statusCode:
+        example: 405
+        type: integer
+      sucsess:
+        example: false
+        type: boolean
+    type: object
+  endpoint.ResponsePost201:
+    properties:
+      message:
+        example: Ресурс создан
+        type: string
+      resourceID:
+        example: 77
+        type: integer
+      statusCode:
+        example: 201
+        type: integer
+      sucsess:
+        example: true
+        type: boolean
+    type: object
+  endpoint.ResponsePost400:
+    properties:
+      message:
+        example: '|пустое поле ''group''|'
+        type: string
+      statusCode:
+        example: 400
+        type: integer
+      sucsess:
+        example: false
+        type: boolean
+    type: object
+  endpoint.ResponsePost405:
+    properties:
+      message:
+        example: 'ошибка метода. Ожидался: POST, имеется: GET'
+        type: string
+      statusCode:
+        example: 405
+        type: integer
+      sucsess:
+        example: false
+        type: boolean
+    type: object
+  endpoint.ResponsePost500:
+    properties:
+      message:
+        example: 'ресурс в стороннем хранилище не найден, код ответа: 404'
+        type: string
+      statusCode:
+        example: 500
+        type: integer
+      sucsess:
+        example: false
+        type: boolean
+    type: object
+  endpoint.Song:
+    properties:
+      group:
+        example: Muse
+        type: string
+      song:
+        example: Supermassive Black Hole
+        type: string
+    type: object
+externalDocs:
+  description: '"Резерв для дополнительного описания API"'
+  url: https://t.me/+ZGac_D1V4wFjYzRi
+host: localhost:8080
+info:
+  contact:
+    email: KEF1991@yandex.ru
+    name: Евгений
+    url: https://github.com/jedyEvgeny
+  description: Проект Effective Mobile
+  license:
+    name: MIT
+    url: http://opensource.org/licenses/MIT
+  title: Онлайн-библиотека музыки
+  version: "1.0"
+paths:
+  /song-add:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Добавляет новую песню.
+        Наименование песни и группа передаются в теле запроса в json-объекте.
+        При создании песни происходит обращение к удалённому серверу для обогащения информации.
+      parameters:
+      - description: Добавляем песню
+        in: body
+        name: song
+        required: true
+        schema:
+          $ref: '#/definitions/endpoint.Song'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Запись успешно создана
+          schema:
+            $ref: '#/definitions/endpoint.ResponsePost201'
+        "400":
+          description: Ошибка валидации данных
+          schema:
+            $ref: '#/definitions/endpoint.ResponsePost400'
+        "405":
+          description: Метод не разрешен
+          schema:
+            $ref: '#/definitions/endpoint.ResponsePost405'
+        "500":
+          description: Ошибка сервера
+          schema:
+            $ref: '#/definitions/endpoint.ResponsePost500'
+      summary: Добавить песню
+      tags:
+      - songs
+  /song-del/{id}:
+    delete:
+      description: |-
+        Удаляет песню.
+        ID песни передаётся в URL.
+        При отсутствии песни возвращается статус 204, как если бы песня была и успешно удалена.
+      parameters:
+      - description: id существующей песни
+        in: path
+        name: songID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Запись успешно создана
+        "400":
+          description: Ошибка валидации данных
+          schema:
+            $ref: '#/definitions/endpoint.ResponseDel400'
+        "405":
+          description: Метод не разрешен
+          schema:
+            $ref: '#/definitions/endpoint.ResponseDel405'
+        "500":
+          description: Ошибка сервера
+          schema:
+            $ref: '#/definitions/endpoint.ResponsePost500'
+      summary: Удалить песню
+      tags:
+      - songs
+produces:
+- json text/plain
+schemes:
+- http
+swagger: "2.0"
+tags:
+- description: Операции с товарами
+  externalDocs:
+    description: Связь с автором в Телеграм
+    url: https://t.me/EvKly
+  name: items
+x-name:
+  environment: production
+  team: backend
+  version: 1.0.0

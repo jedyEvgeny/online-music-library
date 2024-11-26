@@ -1,0 +1,266 @@
+{
+    "consumes": [
+        "application/json"
+    ],
+    "produces": [
+        "json text/plain"
+    ],
+    "schemes": [
+        "http"
+    ],
+    "swagger": "2.0",
+    "info": {
+        "description": "Проект Effective Mobile",
+        "title": "Онлайн-библиотека музыки",
+        "contact": {
+            "name": "Евгений",
+            "url": "https://github.com/jedyEvgeny",
+            "email": "KEF1991@yandex.ru"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "http://opensource.org/licenses/MIT"
+        },
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/",
+    "paths": {
+        "/song-add": {
+            "post": {
+                "description": "Добавляет новую песню.\nНаименование песни и группа передаются в теле запроса в json-объекте.\nПри создании песни происходит обращение к удалённому серверу для обогащения информации.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "songs"
+                ],
+                "summary": "Добавить песню",
+                "parameters": [
+                    {
+                        "description": "Добавляем песню",
+                        "name": "song",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/endpoint.Song"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Запись успешно создана",
+                        "schema": {
+                            "$ref": "#/definitions/endpoint.ResponsePost201"
+                        }
+                    },
+                    "400": {
+                        "description": "Ошибка валидации данных",
+                        "schema": {
+                            "$ref": "#/definitions/endpoint.ResponsePost400"
+                        }
+                    },
+                    "405": {
+                        "description": "Метод не разрешен",
+                        "schema": {
+                            "$ref": "#/definitions/endpoint.ResponsePost405"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/endpoint.ResponsePost500"
+                        }
+                    }
+                }
+            }
+        },
+        "/song-del/{id}": {
+            "delete": {
+                "description": "Удаляет песню.\nID песни передаётся в URL.\nПри отсутствии песни возвращается статус 204, как если бы песня была и успешно удалена.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "songs"
+                ],
+                "summary": "Удалить песню",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "id существующей песни",
+                        "name": "songID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Запись успешно создана"
+                    },
+                    "400": {
+                        "description": "Ошибка валидации данных",
+                        "schema": {
+                            "$ref": "#/definitions/endpoint.ResponseDel400"
+                        }
+                    },
+                    "405": {
+                        "description": "Метод не разрешен",
+                        "schema": {
+                            "$ref": "#/definitions/endpoint.ResponseDel405"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/endpoint.ResponsePost500"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "endpoint.ResponseDel400": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "не смогли прочитать параметр запроса"
+                },
+                "statusCode": {
+                    "type": "integer",
+                    "example": 400
+                },
+                "sucsess": {
+                    "type": "boolean",
+                    "example": false
+                }
+            }
+        },
+        "endpoint.ResponseDel405": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "ошибка метода. Ожидался: DELETE, имеется: POST"
+                },
+                "statusCode": {
+                    "type": "integer",
+                    "example": 405
+                },
+                "sucsess": {
+                    "type": "boolean",
+                    "example": false
+                }
+            }
+        },
+        "endpoint.ResponsePost201": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Ресурс создан"
+                },
+                "resourceID": {
+                    "type": "integer",
+                    "example": 77
+                },
+                "statusCode": {
+                    "type": "integer",
+                    "example": 201
+                },
+                "sucsess": {
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "endpoint.ResponsePost400": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "|пустое поле 'group'|"
+                },
+                "statusCode": {
+                    "type": "integer",
+                    "example": 400
+                },
+                "sucsess": {
+                    "type": "boolean",
+                    "example": false
+                }
+            }
+        },
+        "endpoint.ResponsePost405": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "ошибка метода. Ожидался: POST, имеется: GET"
+                },
+                "statusCode": {
+                    "type": "integer",
+                    "example": 405
+                },
+                "sucsess": {
+                    "type": "boolean",
+                    "example": false
+                }
+            }
+        },
+        "endpoint.ResponsePost500": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "ресурс в стороннем хранилище не найден, код ответа: 404"
+                },
+                "statusCode": {
+                    "type": "integer",
+                    "example": 500
+                },
+                "sucsess": {
+                    "type": "boolean",
+                    "example": false
+                }
+            }
+        },
+        "endpoint.Song": {
+            "type": "object",
+            "properties": {
+                "group": {
+                    "type": "string",
+                    "example": "Muse"
+                },
+                "song": {
+                    "type": "string",
+                    "example": "Supermassive Black Hole"
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "description": "Операции с товарами",
+            "name": "items",
+            "externalDocs": {
+                "description": "Связь с автором в Телеграм",
+                "url": "https://t.me/EvKly"
+            }
+        }
+    ],
+    "externalDocs": {
+        "description": "\"Резерв для дополнительного описания API\"",
+        "url": "https://t.me/+ZGac_D1V4wFjYzRi"
+    },
+    "x-name": {
+        "environment": "production",
+        "team": "backend",
+        "version": "1.0.0"
+    }
+}

@@ -39,7 +39,7 @@ func (db *DataBase) Write(song *service.EnrichedSong, requestID string) (songID 
 
 func (db *DataBase) getOrCreateGroup(tx *sql.Tx, group string) (int, error) {
 	var groupID int
-	sqlStmt, err := tx.Prepare(requestSelectGroupID())
+	sqlStmt, err := tx.Prepare(requestSelectGroupIdByGroupName())
 	if err != nil {
 		return 0, fmt.Errorf(errStmt, err)
 	}

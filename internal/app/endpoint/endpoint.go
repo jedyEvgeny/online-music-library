@@ -34,6 +34,19 @@ const (
 	msgRequest = "[%s] Получен запрос с методом: %s от URL: %s. Обработчик: %s\n"
 )
 
+// @Summary		Добавить песню
+// @Description	Добавляет новую песню.
+// @Description	Наименование песни и группа передаются в теле запроса в json-объекте.
+// @Description	При создании песни происходит обращение к удалённому серверу для обогащения информации.
+// @Tags			songs
+// @Accept			json
+// @Produce		json
+// @Param			song	body		Song			true	"Добавляем песню"
+// @Success		201		{object}	ResponsePost201	"Запись успешно создана"
+// @Failure		400		{object}	ResponsePost400	"Ошибка валидации данных"
+// @Failure		405		{object}	ResponsePost405	"Метод не разрешен"
+// @Failure		500		{object}	ResponsePost500	"Ошибка сервера"
+// @Router			/song-add [post]
 func (e *Endpoint) HandlerAddSong(w http.ResponseWriter, r *http.Request) {
 	h := "HandlerAddSong"
 	reqID := requestID()
@@ -46,6 +59,18 @@ func (e *Endpoint) HandlerAddSong(w http.ResponseWriter, r *http.Request) {
 	w.Write(resp)
 }
 
+// @Summary		Удалить песню
+// @Description	Удаляет песню.
+// @Description	ID песни передаётся в URL.
+// @Description	При отсутствии песни возвращается статус 204, как если бы песня была и успешно удалена.
+// @Tags			songs
+// @Produce		json
+// @Param			songID	path	int	true	"id существующей песни"
+// @Success		204		"Запись успешно создана"
+// @Failure		400		{object}	ResponseDel400	"Ошибка валидации данных"
+// @Failure		405		{object}	ResponseDel405	"Метод не разрешен"
+// @Failure		500		{object}	ResponsePost500	"Ошибка сервера"
+// @Router			/song-del/{id} [delete]
 func (e *Endpoint) HandlerDeleteSong(w http.ResponseWriter, r *http.Request) {
 	h := "HandlerDeleteSong"
 	reqID := requestID()
@@ -61,6 +86,21 @@ func (e *Endpoint) HandlerDeleteSong(w http.ResponseWriter, r *http.Request) {
 	w.Write(resp)
 }
 
+// @Summary		Получить текст песни
+// @Description	Получает текст песни.
+// @Description	ID песни передаётся в URL.
+// @Description	При отсутствии песни возвращается статус 204, как если бы песня была и успешно удалена.
+// @Tags			songs
+// @Produce		json
+// @Param			songID	path		int				true	"id существующей песни"
+// @Param offset query int false "Смещение для пагинации"
+// @Param limit query int false "Количество записей для пагинации"
+// @Success		200		{object}	ResponseLirycs200	"Запись успешно создана"
+// @Failure		400		{object}	ResponseLirycs400	"Ошибка валидации данных"
+// @Failure		404		{object}	ResponseLirycs404	"Ресурс не найден"
+// @Failure		405		{object}	ResponseLirycs405	"Метод не разрешен"
+// @Failure		500		{object}	ResponseLirycs500	"Ошибка сервера"
+// @Router			/lyrics/{id} [get]
 func (e *Endpoint) HandlerLiryc(w http.ResponseWriter, r *http.Request) {
 	h := "HandlerLiryc"
 	reqID := requestID()
