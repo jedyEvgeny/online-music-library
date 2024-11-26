@@ -18,8 +18,8 @@ func newRouteServer() *routeServer {
 	return &routeServer{
 		Library:    "/list/",
 		Lyrics:     "/lyrics/",
-		DeleteSong: "/song-del",
-		UpdateSong: "/song-up/",
+		DeleteSong: "/song-del/",
+		UpdateSong: "/song-upd/",
 		AddSong:    "/song-add",
 	}
 }
@@ -37,4 +37,5 @@ func (a *App) configureRoutes() {
 	http.HandleFunc(a.routeServer.Lyrics, a.endpoint.HandlerLiryc)
 	http.HandleFunc(a.routeServer.DeleteSong, a.endpoint.HandlerDeleteSong)
 	http.HandleFunc(a.routeServer.Library, a.endpoint.HandlerLibrary)
+	http.HandleFunc(a.routeServer.UpdateSong, a.endpoint.HandlerPatchSong)
 }

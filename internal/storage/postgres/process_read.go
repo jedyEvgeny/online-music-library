@@ -81,7 +81,7 @@ func (db *DataBase) findLirycsBySongID(tx *sql.Tx, songID int, requestID string)
 }
 
 func (db *DataBase) findSongsByFilter(tx *sql.Tx, f *service.FilterAndPaggination, requestID string) (*[]service.EnrichedSong, int, error) {
-	query, arg := createQuery(f)
+	query, arg := createQueryForFilterAndPaggination(f)
 
 	sqlStmt, err := tx.Prepare(query)
 	if err != nil {
@@ -115,7 +115,7 @@ func (db *DataBase) findSongsByFilter(tx *sql.Tx, f *service.FilterAndPagginatio
 	return &songs, http.StatusOK, nil
 }
 
-func createQuery(f *service.FilterAndPaggination) (string, interface{}) {
+func createQueryForFilterAndPaggination(f *service.FilterAndPaggination) (string, interface{}) {
 	var args interface{}
 	var condition string
 

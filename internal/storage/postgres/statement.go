@@ -16,14 +16,14 @@ func requestInsertGroup() string {
 	`
 }
 
-func selectSongByGroup() string {
+func requestSelectSongByGroup() string {
 	return `
 	SELECT s_id 
 	FROM songs 
 	WHERE group_id = $1 AND song = $2`
 }
 
-func reqUpdateSongToinitState() string {
+func requestUpdateSongToinitState() string {
 	return `
     UPDATE songs
     SET release_date = $1, 
@@ -61,4 +61,35 @@ func requestSelectSongsByFilter(condition string) string {
 	return `SELECT s.song, s.release_date, s.lyrics, s.link, mg.name 
             FROM songs s 
             JOIN music_groups mg ON s.group_id = mg.g_id` + condition
+}
+
+func requestSelectGroupBySong() string {
+	return `
+	SELECT group_id 
+	FROM songs 
+	WHERE s_id = $1`
+}
+
+func requestSelectCountSongsByGroup() string {
+	return `
+	SELECT COUNT(*) 
+	FROM songs 
+	WHERE group_id = $1
+	`
+}
+
+func requestUpdateGroupIdInSongsBySongID() string {
+	return `
+	UPDATE songs 
+	SET group_id = $1 
+	WHERE s_id = $2
+	`
+}
+
+func requestUpdateGroupForSingleSongBySuchGroup() string {
+	return `
+	UPDATE music_groups 
+	SET name = $1 
+	WHERE g_id = $2
+	`
 }

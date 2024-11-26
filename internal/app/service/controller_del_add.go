@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 )
 
 func (s *Service) ProseccAddSongRequest(r *http.Request, requestID string) ([]byte, int) {
@@ -119,18 +120,17 @@ func validateBodyAddSongRequest(req *Song) error {
 			fmt.Sprintf("|для поля `%s` много символов: %d|", song, symbSong))
 	}
 
-	var err error
 	if bufErrors.Len() > 0 {
-		err = errors.New(bufErrors.String())
+		return errors.New(bufErrors.String())
 	}
 
-	return err
+	return nil
 }
 
 func validateDelSongRequest(r *http.Request, requestID string) (int, int, []byte) {
 	if r.Method != http.MethodDelete {
 		msg := fmt.Sprintf(errMethod, http.MethodDelete, r.Method)
-		dataJson, statusCode := createDelSongResponse(
+		dataJson, statusCode := createPatchDelSongResponse(
 			false, http.StatusMethodNotAllowed, msg, requestID)
 		return 0, statusCode, dataJson
 	}
@@ -139,16 +139,16 @@ func validateDelSongRequest(r *http.Request, requestID string) (int, int, []byte
 
 	id, err := validateParamDelSongRequest(idStr)
 	if err != nil {
-		dataJson, statusCode := createDelSongResponse(
+		dataJson, statusCode := createPatchDelSongResponse(
 			false, http.StatusBadRequest, fmt.Sprint(err), requestID)
 		return 0, statusCode, dataJson
 	}
 	return id, http.StatusNoContent, nil
 }
 
-func createDelSongResponse(ok bool, statusCode int, msg, requestID string) ([]byte, int) {
+func createPatchDelSongResponse(ok bool, statusCode int, msg, requestID string) ([]byte, int) {
 	log.Printf("[%s]  %s\n", requestID, msg)
-	resp := ResponseDelete{
+	resp := ResponsePatchDelete{
 		Sucsess:    ok,
 		Message:    msg,
 		StatusCode: statusCode,
@@ -163,8 +163,8 @@ func createDelSongResponse(ok bool, statusCode int, msg, requestID string) ([]by
 }
 
 func decodeDelSongRequest(u *url.URL) string {
-	query := u.Query()
-	return query.Get("song_id")
+	path := u.Path
+	return strings.TrimPrefix(path, "/song-del/")
 }
 
 func validateParamDelSongRequest(idStr string) (int, error) {
@@ -183,7 +183,7 @@ func (s *Service) delSongFromStorage(id int, requestID string) ([]byte, int) {
 	err := s.delUpdater.Delete(id, requestID)
 
 	if err != nil {
-		dataJson, statusCode := createDelSongResponse(
+		dataJson, statusCode := createPatchDelSongResponse(
 			false, http.StatusInternalServerError, fmt.Sprint(err), requestID)
 		return dataJson, statusCode
 	}

@@ -10,8 +10,11 @@ type WriteReader interface {
 	ReadLibrary(*FilterAndPaggination, string) (*[]EnrichedSong, int, error)
 }
 
+// func (db *DataBase) Update(song *service.EnrichedSong, songID int, requestID string) (statusCode int, err error) {
+
 type DelUpdater interface {
 	Delete(int, string) error
+	Update(*EnrichedSong, int, string) (int, error)
 }
 
 type Enricher interface {

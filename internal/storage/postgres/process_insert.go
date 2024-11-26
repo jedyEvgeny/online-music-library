@@ -94,7 +94,7 @@ func (db *DataBase) createGroup(tx *sql.Tx, group string) (int, error) {
 
 func (db *DataBase) findSongIdByGroupID(tx *sql.Tx, groupID int, songName string) (int, error) {
 	var songID int
-	sqlStmt, err := tx.Prepare(selectSongByGroup())
+	sqlStmt, err := tx.Prepare(requestSelectSongByGroup())
 	if err != nil {
 		return 0, fmt.Errorf(errStmt, err)
 	}
@@ -112,7 +112,7 @@ func (db *DataBase) findSongIdByGroupID(tx *sql.Tx, groupID int, songName string
 }
 
 func (db *DataBase) updateSongToInitState(tx *sql.Tx, id int, song *service.EnrichedSong) error {
-	sqlStmt, err := tx.Prepare(reqUpdateSongToinitState())
+	sqlStmt, err := tx.Prepare(requestUpdateSongToinitState())
 	if err != nil {
 		return fmt.Errorf(errStmt, err)
 	}

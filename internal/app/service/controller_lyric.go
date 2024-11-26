@@ -15,8 +15,6 @@ import (
 func (s *Service) ProcessReadLirycsSongRequest(r *http.Request, requestID string) ([]byte, int) {
 	defer closeRequestBody(r.Body)
 
-	//Добавить проверку на метод
-
 	reqParam, statusCode, errResponse := validateReadLirycsRequest(r, requestID)
 	if statusCode != http.StatusOK {
 		return errResponse, statusCode
@@ -37,6 +35,13 @@ func (s *Service) ProcessReadLirycsSongRequest(r *http.Request, requestID string
 }
 
 func validateReadLirycsRequest(r *http.Request, requestID string) (*paggination, int, []byte) {
+	if r.Method != http.MethodGet {
+		msg := fmt.Sprintf(errMethod, http.MethodGet, r.Method)
+		dataJson, statusCode := createAddSongResponse(
+			false, http.StatusMethodNotAllowed, msg, requestID, nil)
+		return nil, statusCode, dataJson
+	}
+
 	param := decodeLirycsRequest(r.URL)
 
 	err := param.validateLyricsParamsRequest()
@@ -148,54 +153,3 @@ func createSliceLirycs(s string, p *paggination) []string {
 
 	return lirycs[p.offset:endIdx]
 }
-
-func (s *Service) ProcessUpdateSongRequest(r *http.Request, requestID string) ([]byte, int) {
-	// defer closeRequestBody(r.Body)
-
-	// req, statusCode, errResponse := validatePatchSongRequest(r, requestID)
-	// if statusCode != http.StatusOK {
-	// 	return errResponse, statusCode
-	// }
-	return nil, 0
-}
-
-// func validatePatchSongRequest(r *http.Request, requestID string) (*Song, int, []byte) {
-// 	if r.Method != http.MethodPatch {
-// 		msg := fmt.Sprintf(errMethod, http.MethodPatch, r.Method)
-// 		dataJson, statusCode := createAddSongResponse(
-// 			false, http.StatusMethodNotAllowed, msg, requestID, nil)
-// 		return nil, statusCode, dataJson
-// 	}
-
-// 	req := decodeQueryPatchSongRequest(r.URL)
-
-// 	if err := validateQueryPatchSongRequest(req); err != nil {
-// 		dataJson, statusCode := createAddSongResponse(
-// 			false, http.StatusBadRequest, fmt.Sprint(err), requestID, nil)
-// 		return nil, statusCode, dataJson
-// 	}
-// 	return req, http.StatusOK, nil
-// }
-
-// func decodeQueryPatchSongRequest(u *url.URL) *EnrichedSong {
-// 	query := u.Query()
-
-// 	updatedSong := EnrichedSong{}
-// 	if group := query.Get("group"); group != "" {
-// 		updatedSong.Group = group
-// 	}
-// 	if song := query.Get("song"); song != "" {
-// 		updatedSong.Song = song
-// 	}
-// 	if releaseDate := query.Get("releaseDate"); releaseDate != "" {
-// 		updatedSong.ReleaseDate = releaseDate
-// 	}
-// 	if lyrics := query.Get("text"); lyrics != "" {
-// 		updatedSong.Lyrics = lyrics
-// 	}
-// 	if link := query.Get("link"); link != "" {
-// 		updatedSong.Link = link
-// 	}
-
-// 	return &updatedSong
-// }

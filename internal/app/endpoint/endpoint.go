@@ -31,12 +31,13 @@ func New(c delAdder, u UpdateReader) *Endpoint {
 }
 
 const (
-	msgRequest = "[%s] Получен запрос с методом: %s от URL: %s\n"
+	msgRequest = "[%s] Получен запрос с методом: %s от URL: %s. Обработчик: %s\n"
 )
 
 func (e *Endpoint) HandlerAddSong(w http.ResponseWriter, r *http.Request) {
+	h := "HandlerAddSong"
 	reqID := requestID()
-	log.Printf(msgRequest, reqID, r.Method, r.URL)
+	log.Printf(msgRequest, reqID, r.Method, r.URL, h)
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
@@ -46,8 +47,9 @@ func (e *Endpoint) HandlerAddSong(w http.ResponseWriter, r *http.Request) {
 }
 
 func (e *Endpoint) HandlerDeleteSong(w http.ResponseWriter, r *http.Request) {
+	h := "HandlerDeleteSong"
 	reqID := requestID()
-	log.Printf(msgRequest, reqID, r.Method, r.URL)
+	log.Printf(msgRequest, reqID, r.Method, r.URL, h)
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	resp, status := e.process.ProseccDelSongRequest(r, reqID)
@@ -60,8 +62,9 @@ func (e *Endpoint) HandlerDeleteSong(w http.ResponseWriter, r *http.Request) {
 }
 
 func (e *Endpoint) HandlerLiryc(w http.ResponseWriter, r *http.Request) {
+	h := "HandlerLiryc"
 	reqID := requestID()
-	log.Printf(msgRequest, reqID, r.Method, r.URL)
+	log.Printf(msgRequest, reqID, r.Method, r.URL, h)
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	resp, status := e.update.ProcessReadLirycsSongRequest(r, reqID)
@@ -74,8 +77,9 @@ func (e *Endpoint) HandlerLiryc(w http.ResponseWriter, r *http.Request) {
 }
 
 func (e *Endpoint) HandlerLibrary(w http.ResponseWriter, r *http.Request) {
+	h := "HandlerLibrary"
 	reqID := requestID()
-	log.Printf(msgRequest, reqID, r.Method, r.URL)
+	log.Printf(msgRequest, reqID, r.Method, r.URL, h)
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	resp, status := e.update.ProcessLibraryRequest(r, reqID)
@@ -87,10 +91,10 @@ func (e *Endpoint) HandlerLibrary(w http.ResponseWriter, r *http.Request) {
 	w.Write(resp)
 }
 
-// Дописать
 func (e *Endpoint) HandlerPatchSong(w http.ResponseWriter, r *http.Request) {
+	h := "HandlerPatchSong"
 	reqID := requestID()
-	log.Printf(msgRequest, reqID, r.Method, r.URL)
+	log.Printf(msgRequest, reqID, r.Method, r.URL, h)
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	resp, status := e.update.ProcessUpdateSongRequest(r, reqID)

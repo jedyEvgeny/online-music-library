@@ -21,8 +21,6 @@ const (
 func (s *Service) ProcessLibraryRequest(r *http.Request, requestID string) ([]byte, int) {
 	defer closeRequestBody(r.Body)
 
-	//Добавить проверку на метод
-
 	reqParam, statusCode, errResponse := validateLibraryRequest(r, requestID)
 	if statusCode != http.StatusOK {
 		return errResponse, statusCode
@@ -43,6 +41,13 @@ func (s *Service) ProcessLibraryRequest(r *http.Request, requestID string) ([]by
 }
 
 func validateLibraryRequest(r *http.Request, requestID string) (*FilterAndPaggination, int, []byte) {
+	if r.Method != http.MethodGet {
+		msg := fmt.Sprintf(errMethod, http.MethodGet, r.Method)
+		dataJson, statusCode := createAddSongResponse(
+			false, http.StatusMethodNotAllowed, msg, requestID, nil)
+		return nil, statusCode, dataJson
+	}
+
 	param := decodeLibraryRequest(r.URL)
 
 	err := param.validateAndFillLibraryParamsRequest()

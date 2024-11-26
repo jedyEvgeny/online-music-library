@@ -5,6 +5,16 @@ type Song struct {
 	Song  string `json:"song"`
 }
 
+type FilterAndPaggination struct {
+	SortBy    string
+	Filter    map[string]interface{}
+	Offset    int
+	Limit     int
+	filter    string
+	offsetStr string
+	limitStr  string
+}
+
 type ResponsePost struct {
 	Sucsess    bool   `json:"sucsess"`
 	Message    string `json:"message"`
@@ -20,7 +30,7 @@ type EnrichedSong struct {
 	Link        string `json:"link"`
 }
 
-type ResponseDelete struct {
+type ResponsePatchDelete struct {
 	Sucsess    bool   `json:"sucsess"`
 	Message    string `json:"message"`
 	StatusCode int    `json:"statusCode"`
@@ -30,7 +40,7 @@ type ResponseLirycs struct {
 	Sucsess    bool     `json:"sucsess"`
 	Message    string   `json:"message"`
 	StatusCode int      `json:"statusCode"`
-	Lirycs     []string `json:"lirycs,omitempty"`
+	Lirycs     []string `json:"lyrics,omitempty"`
 }
 
 type ResponseLibrary struct {
@@ -38,16 +48,6 @@ type ResponseLibrary struct {
 	Message    string         `json:"message"`
 	StatusCode int            `json:"statusCode"`
 	Library    []EnrichedSong `json:"library,omitempty"`
-}
-
-type FilterAndPaggination struct {
-	SortBy    string
-	Filter    map[string]interface{}
-	Offset    int
-	Limit     int
-	filter    string
-	offsetStr string
-	limitStr  string
 }
 
 type paggination struct {
@@ -60,18 +60,16 @@ type paggination struct {
 }
 
 const (
-	msg200 = "Ресурс существует"
-	msg201 = "Ресурс создан"
-	msg204 = "Ресурс в хранилище отсутвует"
+	msg200    = "Ресурс существует"
+	msg201    = "Ресурс создан"
+	msg204    = "Ресурс в хранилище отсутвует"
+	msg200Upd = "Ресурс обновлён"
 )
 
 const (
 	errMarshalJson = "ошибка создания json-объекта: %v"
 	errDecodeJson  = "ошибка декодирования json-объекта"
 	errMethod      = "ошибка метода. Ожидался: %s, имеется: %s"
-	errIsNotUUID   = "поле json valletID ожидалось с уникальным UUID. Имеется: %v"
-	errOperation   = "поле json operationType: %s. Ожидалось 'DEPOSIT' или 'WITHDRAW'"
-	errAmount      = "поле json amount должно быть больше нуля. Имеется: %d"
 	errIDDel       = "не смогли прочитать параметр `s_id` в строке запроса: %w"
 	errIDValueDel  = "`s_id` не должно быть меньше 1. Имеется: %d"
 )
