@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -130,8 +129,6 @@ func (f *FilterAndPaggination) validateAndFillLibraryParamsRequest() error {
 	f.Offset = offset
 	f.Filter = filterMap
 
-	log.Printf("Тип сортировки: %s | offset=%d | limit=%d | фильтр=%s",
-		f.SortBy, f.Offset, f.Limit, f.Filter)
 	return nil
 }
 
@@ -162,7 +159,6 @@ func (s *Service) createLibraryResponse(ok bool, statusCode int, msg, requestID 
 	}
 	dataJson, err := json.Marshal(resp)
 	if err != nil {
-		log.Printf(errMarshalJson, err)
 		return nil, http.StatusInternalServerError
 	}
 	return dataJson, statusCode

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -62,7 +61,6 @@ func (s *Service) validateReadLirycsRequest(r *http.Request, requestID string) (
 
 func decodeLirycsRequest(u *url.URL) *paggination {
 	path := u.Path
-	log.Println("Путь:", path)
 
 	q := u.Query()
 
@@ -81,8 +79,6 @@ func decodeLirycsRequest(u *url.URL) *paggination {
 		limitStr:  limit,
 		idSongStr: strings.TrimPrefix(path, "/lyrics/"),
 	}
-
-	log.Println(*p)
 
 	return p
 }
@@ -133,7 +129,6 @@ func (s *Service) createLirycsResponse(ok bool, statusCode int, msg, requestID s
 	}
 	dataJson, err := json.Marshal(resp)
 	if err != nil {
-		log.Printf(errMarshalJson, err)
 		return nil, http.StatusInternalServerError
 	}
 	return dataJson, statusCode
