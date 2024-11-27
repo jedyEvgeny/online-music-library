@@ -4,9 +4,14 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"time"
 )
 
 func (db *DataBase) Delete(id int, requestID string) (err error) {
+	const op = "Delete"
+	db.log.Debug(fmt.Sprintf(logStart, requestID, op))
+	startTx := time.Now()
+
 	tx, err := db.db.Begin()
 	if err != nil {
 		return fmt.Errorf(errCreateTx, err)
@@ -22,15 +27,21 @@ func (db *DataBase) Delete(id int, requestID string) (err error) {
 		}
 	}()
 
-	err = removeSong(tx, id, requestID)
+	err = db.removeSong(tx, id, requestID)
 	if err != nil {
 		return err
 	}
+	endTx := time.Now()
 
+	db.log.Debug(fmt.Sprintf(logTxTime, requestID, endTx.Sub(startTx)))
+	db.log.Debug(fmt.Sprintf(logEnd, requestID, op))
 	return nil
 }
 
-func removeSong(tx *sql.Tx, id int, requestID string) error {
+func (db *DataBase) removeSong(tx *sql.Tx, id int, requestID string) error {
+	const op = "removeSong"
+	db.log.Debug(fmt.Sprintf(logStart, requestID, op))
+
 	sqlStmt, err := tx.Prepare(requestDeleteSong())
 	if err != nil {
 		return fmt.Errorf(errStmt, err)
@@ -51,5 +62,6 @@ func removeSong(tx *sql.Tx, id int, requestID string) error {
 		log.Printf(msgResAffected, requestID, id)
 	}
 
+	db.log.Debug(fmt.Sprintf(logEnd, requestID, op))
 	return nil
 }

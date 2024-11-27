@@ -63,9 +63,6 @@ func (s *Service) validateLibraryRequest(r *http.Request, requestID string) (*Fi
 }
 
 func decodeLibraryRequest(u *url.URL) *FilterAndPaggination {
-	path := u.Path
-	log.Println("Путь:", path)
-
 	q := u.Query()
 
 	sortBy := q.Get("sortBy")
@@ -90,7 +87,6 @@ func decodeLibraryRequest(u *url.URL) *FilterAndPaggination {
 		limitStr:  limit,
 	}
 
-	log.Println(*p)
 	return p
 }
 

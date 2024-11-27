@@ -120,6 +120,8 @@ type EnrichedSong struct {
 	Group       string `json:"group" example:"Mobile"`
 	Song        string `json:"song" example:"Hey Effective"`
 	ReleaseDate string `json:"releaseDate" example:"27.11.2024"`
+	Lyrics      string `json:"text" example:"Вот! Новый поворот! Что он нам несёт? Пропасть или взлёт? Ты не разберёшь. Пока не повернёшь. За па-а-ва-аа-рот!"`
+	Link        string `json:"link" example:"google.com"`
 }
 
 type ResponseUpdate200 struct {

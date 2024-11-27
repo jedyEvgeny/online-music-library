@@ -20,9 +20,9 @@ type Client struct {
 }
 
 const (
-	logStart           = "[%s] начинаем связь со сторонним сервером"
+	logStart           = "[%s] устанавливаем связь со сторонним сервером"
 	logCreateRequest   = "[%s] сформирован запрос: %s"
-	logErrRequest      = "[%s]не смогли создать запрос с URL: %s: %v"
+	logErrRequest      = "[%s] не смогли создать запрос с URL: %s: %v"
 	logErrExectRequest = "[%s] ошибка выполнения запроса №%d: %v"
 	logRespStatus      = "[%s] получен код %d от стороннего сервера"
 	logErrConnect      = "[%s] не удалось установить связь со сторонним сервером"

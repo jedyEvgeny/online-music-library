@@ -20,7 +20,7 @@ func New(logLevelStr string) *Logger {
 		logLevel = LevelInfo
 	}
 
-	log.SetFlags(log.Ldate | log.Ltime)
+	log.SetFlags(log.Ldate | log.Lmicroseconds)
 
 	return &Logger{
 		currentLogLevel: logLevel,

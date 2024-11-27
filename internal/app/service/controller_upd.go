@@ -20,7 +20,6 @@ func (s *Service) ProcessUpdateSongRequest(r *http.Request, requestID string) ([
 		s.log.Debug(fmt.Sprintf(logErrValidate, requestID, string(errResponse)))
 		return errResponse, statusCode
 	}
-
 	response, statusCode := s.updSongInStorage(data, idSong, requestID)
 
 	s.log.Debug(fmt.Sprintf(logToEndpoin, requestID, statusCode))

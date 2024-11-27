@@ -7,11 +7,18 @@ definitions:
       group:
         example: Mobile
         type: string
+      link:
+        example: google.com
+        type: string
       releaseDate:
         example: 27.11.2024
         type: string
       song:
         example: Hey Effective
+        type: string
+      text:
+        example: Вот! Новый поворот! Что он нам несёт? Пропасть или взлёт? Ты не разберёшь.
+          Пока не повернёшь. За па-а-ва-аа-рот!
         type: string
     type: object
   endpoint.ResponseDel400:
@@ -297,7 +304,7 @@ paths:
       description: |-
         Получает данные библиотеки с фильтрацией и пагинацией.
         Параметры фильтрации и пагинации передаются в параметрах запроса. ID песни передаётся как часть пути в URL.
-        Фильтр даты передавать в формате
+        Фильтр даты передавать в формате дд.мм.гггг
       parameters:
       - description: id существующей песни
         in: path
@@ -317,6 +324,7 @@ paths:
       - description: Количество записей для пагинации
         in: query
         name: limit
+        required: true
         type: integer
       produces:
       - application/json
@@ -362,6 +370,7 @@ paths:
       - description: Количество записей для пагинации
         in: query
         name: limit
+        required: true
         type: integer
       produces:
       - application/json
@@ -442,7 +451,7 @@ paths:
       - application/json
       responses:
         "204":
-          description: Запись успешно создана
+          description: Запись отсутствует в БД
         "400":
           description: Ошибка валидации данных
           schema:

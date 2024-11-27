@@ -31,7 +31,7 @@ const docTemplate = `{
     "paths": {
         "/list/{songID}": {
             "get": {
-                "description": "Получает данные библиотеки с фильтрацией и пагинацией.\nПараметры фильтрации и пагинации передаются в параметрах запроса. ID песни передаётся как часть пути в URL.\nФильтр даты передавать в формате",
+                "description": "Получает данные библиотеки с фильтрацией и пагинацией.\nПараметры фильтрации и пагинации передаются в параметрах запроса. ID песни передаётся как часть пути в URL.\nФильтр даты передавать в формате дд.мм.гггг",
                 "produces": [
                     "application/json"
                 ],
@@ -64,7 +64,8 @@ const docTemplate = `{
                         "type": "integer",
                         "description": "Количество записей для пагинации",
                         "name": "limit",
-                        "in": "query"
+                        "in": "query",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -129,7 +130,8 @@ const docTemplate = `{
                         "type": "integer",
                         "description": "Количество записей для пагинации",
                         "name": "limit",
-                        "in": "query"
+                        "in": "query",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -239,7 +241,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "204": {
-                        "description": "Запись успешно создана"
+                        "description": "Запись отсутствует в БД"
                     },
                     "400": {
                         "description": "Ошибка валидации данных",
@@ -336,6 +338,10 @@ const docTemplate = `{
                     "type": "string",
                     "example": "Mobile"
                 },
+                "link": {
+                    "type": "string",
+                    "example": "google.com"
+                },
                 "releaseDate": {
                     "type": "string",
                     "example": "27.11.2024"
@@ -343,6 +349,10 @@ const docTemplate = `{
                 "song": {
                     "type": "string",
                     "example": "Hey Effective"
+                },
+                "text": {
+                    "type": "string",
+                    "example": "Вот! Новый поворот! Что он нам несёт? Пропасть или взлёт? Ты не разберёшь. Пока не повернёшь. За па-а-ва-аа-рот!"
                 }
             }
         },

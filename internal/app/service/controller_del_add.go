@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -84,7 +83,6 @@ func (s *Service) createAddSongResponse(ok bool, statusCode int, msg, requestID 
 	}
 	dataJson, err := json.Marshal(resp)
 	if err != nil {
-		log.Printf(errMarshalJson, err)
 		return nil, http.StatusInternalServerError
 	}
 	return dataJson, statusCode
@@ -162,7 +160,6 @@ func (s *Service) createPatchDelSongResponse(ok bool, statusCode int, msg, reque
 
 	dataJson, err := json.Marshal(resp)
 	if err != nil {
-		log.Printf(errMarshalJson, err)
 		return nil, http.StatusInternalServerError
 	}
 	return dataJson, statusCode

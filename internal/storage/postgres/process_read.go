@@ -4,11 +4,15 @@ import (
 	"database/sql"
 	"fmt"
 	"jedyEvgeny/online-music-library/internal/app/service"
-	"log"
 	"net/http"
+	"time"
 )
 
 func (db *DataBase) ReadLibrary(f *service.FilterAndPaggination, requestID string) (songs *[]service.EnrichedSong, statusCode int, err error) {
+	const op = "ReadLibrary"
+	db.log.Debug(fmt.Sprintf(logStart, requestID, op))
+	startTx := time.Now()
+
 	tx, err := db.db.Begin()
 	if err != nil {
 		return nil, http.StatusInternalServerError, fmt.Errorf(errCreateTx, err)
@@ -31,10 +35,18 @@ func (db *DataBase) ReadLibrary(f *service.FilterAndPaggination, requestID strin
 	if err == sql.ErrNoRows {
 		return nil, http.StatusNotFound, err
 	}
+	endTx := time.Now()
+
+	db.log.Debug(fmt.Sprintf(logTxTime, requestID, endTx.Sub(startTx)))
+	db.log.Debug(fmt.Sprintf(logEnd, requestID, op))
 	return songs, http.StatusOK, nil
 }
 
 func (db *DataBase) ReadLirycs(songID int, requestID string) (liryc string, statusCode int, err error) {
+	const op = "ReadLirycs"
+	db.log.Debug(fmt.Sprintf(logStart, requestID, op))
+	startTx := time.Now()
+
 	tx, err := db.db.Begin()
 	if err != nil {
 		return "", http.StatusInternalServerError, fmt.Errorf(errCreateTx, err)
@@ -57,13 +69,16 @@ func (db *DataBase) ReadLirycs(songID int, requestID string) (liryc string, stat
 	if err != nil {
 		return "", http.StatusInternalServerError, err
 	}
+	endTx := time.Now()
 
+	db.log.Debug(fmt.Sprintf(logTxTime, requestID, endTx.Sub(startTx)))
+	db.log.Debug(fmt.Sprintf(logEnd, requestID, op))
 	return liryc, http.StatusOK, nil
 }
 
 func (db *DataBase) findLirycsBySongID(tx *sql.Tx, songID int, requestID string) (string, error) {
-	op := "findLirycsBySongID"
-	log.Printf(msgStart, op)
+	const op = "findLirycsBySongID"
+	db.log.Debug(fmt.Sprintf(logStart, requestID, op))
 
 	var liryc string
 
@@ -83,15 +98,15 @@ func (db *DataBase) findLirycsBySongID(tx *sql.Tx, songID int, requestID string)
 		return "", fmt.Errorf(errExec, err)
 	}
 
-	log.Printf(msgEnd, op)
+	db.log.Debug(fmt.Sprintf(logEnd, requestID, op))
 	return liryc, nil
 }
 
 func (db *DataBase) findSongsByFilter(tx *sql.Tx, f *service.FilterAndPaggination, requestID string) (*[]service.EnrichedSong, int, error) {
-	op := "findSongsByFilter"
-	log.Printf(msgStart, op)
+	const op = "findSongsByFilter"
+	db.log.Debug(fmt.Sprintf(logStart, requestID, op))
 
-	query, arg := createQueryForFilterAndPaggination(f)
+	query, arg := db.createQueryForFilterAndPaggination(f, requestID)
 
 	sqlStmt, err := tx.Prepare(query)
 	if err != nil {
@@ -122,10 +137,14 @@ func (db *DataBase) findSongsByFilter(tx *sql.Tx, f *service.FilterAndPagginatio
 		return nil, http.StatusNotFound, fmt.Errorf(errNoContent, err)
 	}
 
+	db.log.Debug(fmt.Sprintf(logEnd, requestID, op))
 	return &songs, http.StatusOK, nil
 }
 
-func createQueryForFilterAndPaggination(f *service.FilterAndPaggination) (string, interface{}) {
+func (db *DataBase) createQueryForFilterAndPaggination(f *service.FilterAndPaggination, requestID string) (string, interface{}) {
+	const op = "createQueryForFilterAndPaggination"
+	db.log.Debug(fmt.Sprintf(logStart, requestID, op))
+
 	var args interface{}
 	var condition string
 
@@ -156,5 +175,6 @@ func createQueryForFilterAndPaggination(f *service.FilterAndPaggination) (string
 
 	query := requestSelectSongsByFilter(fmt.Sprintf("%s  LIMIT $2 OFFSET $3", condition))
 
+	db.log.Debug(fmt.Sprintf(logEnd, requestID, op))
 	return query, args
 }

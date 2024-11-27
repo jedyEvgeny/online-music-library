@@ -6,9 +6,14 @@ import (
 	"fmt"
 	"jedyEvgeny/online-music-library/internal/app/service"
 	"net/http"
+	"time"
 )
 
 func (db *DataBase) Update(song *service.EnrichedSong, songID int, requestID string) (statusCode int, err error) {
+	const op = "Update"
+	db.log.Debug(fmt.Sprintf(logStart, requestID, op))
+	startTx := time.Now()
+
 	tx, err := db.db.Begin()
 	if err != nil {
 		return http.StatusInternalServerError, fmt.Errorf(errCreateTx, err)
@@ -31,24 +36,26 @@ func (db *DataBase) Update(song *service.EnrichedSong, songID int, requestID str
 	if err != nil {
 		return http.StatusInternalServerError, err
 	}
+	endTx := time.Now()
 
+	db.log.Debug(fmt.Sprintf(logTxTime, requestID, endTx.Sub(startTx)))
+	db.log.Debug(fmt.Sprintf(logEnd, requestID, op))
 	return http.StatusOK, nil
 }
 
 func (db *DataBase) checkSong(tx *sql.Tx, e *service.EnrichedSong, songID int, requestID string) error {
-	fmt.Println("выполняем checkSong")
+	const op = "checkSong"
+	db.log.Debug(fmt.Sprintf(logStart, requestID, op))
 
-	currGroupID, err := db.findGroupID(tx, songID)
+	currGroupID, err := db.findGroupID(tx, songID, requestID)
 	if err != nil {
 		return err
 	}
-	fmt.Println("выполнили currGroup без ошибки")
 
 	groupIdLikeGroupInNewSong, err := db.findExistGroupIdLikeNewGroup(tx, e.Group, requestID)
 	if err != nil {
 		return fmt.Errorf(errNoContent, err)
 	}
-	fmt.Println("выполнили groupIdLikeGroupInNewSong без ошибки")
 
 	foundMoreThanOneSongForCurrGroup, err := db.hasMoreThanOneSongForCurrGroup(tx, currGroupID, requestID)
 	if err != nil {
@@ -56,13 +63,13 @@ func (db *DataBase) checkSong(tx *sql.Tx, e *service.EnrichedSong, songID int, r
 	}
 
 	if e.Group != "" {
-		err = updGroup(tx, e, foundMoreThanOneSongForCurrGroup, currGroupID, songID, groupIdLikeGroupInNewSong)
+		err = db.updGroup(tx, e, foundMoreThanOneSongForCurrGroup, songID, groupIdLikeGroupInNewSong, requestID)
 		if err != nil {
 			return err
 		}
 	}
 
-	needToChange, err := updSong(tx, e, songID)
+	needToChange, err := db.updSong(tx, e, songID, requestID)
 	if !needToChange && err == nil { //если поменялось только название исполнителя
 		return nil
 	}
@@ -70,30 +77,16 @@ func (db *DataBase) checkSong(tx *sql.Tx, e *service.EnrichedSong, songID int, r
 		return err
 	}
 
-	return nil
-}
-
-func findSongIdBySongID(tx *sql.Tx, songID int) error {
-	sqlStmt, err := tx.Prepare(requestSelectSongID())
-	if err != nil {
-		return fmt.Errorf(errStmt, err)
-	}
-	defer func() { _ = sqlStmt.Close() }()
-
-	var countID int
-	err = sqlStmt.QueryRow(songID).Scan(&countID)
-	if err != nil {
-		return fmt.Errorf(errExec, err)
-	}
-	if countID == 0 {
-		return fmt.Errorf(errNoContent)
-	}
+	db.log.Debug(fmt.Sprintf(logEnd, requestID, op))
 	return nil
 }
 
 // findGroupID возвращает id группы из таблицы songs
 // и косвенно проверяет, существует ли переданный songID
-func (db *DataBase) findGroupID(tx *sql.Tx, songID int) (int, error) {
+func (db *DataBase) findGroupID(tx *sql.Tx, songID int, requestID string) (int, error) {
+	const op = "findGroupID"
+	db.log.Debug(fmt.Sprintf(logStart, requestID, op))
+
 	var currGroupID int
 
 	sqlStmt, err := tx.Prepare(requestSelectGroupIdBySongID())
@@ -107,10 +100,14 @@ func (db *DataBase) findGroupID(tx *sql.Tx, songID int) (int, error) {
 		return 0, fmt.Errorf(errExec, err)
 	}
 
+	db.log.Debug(fmt.Sprintf(logEnd, requestID, op))
 	return currGroupID, nil
 }
 
 func (db *DataBase) findExistGroupIdLikeNewGroup(tx *sql.Tx, group, requestID string) (int, error) {
+	const op = "findExistGroupIdLikeNewGroup"
+	db.log.Debug(fmt.Sprintf(logStart, requestID, op))
+
 	var groupIdLikeGroupInNewSong int
 
 	sqlStmt, err := tx.Prepare(requestSelectGroupIdByGroupName())
@@ -126,10 +123,15 @@ func (db *DataBase) findExistGroupIdLikeNewGroup(tx *sql.Tx, group, requestID st
 	if err != nil {
 		return 0, fmt.Errorf(errExec, err)
 	}
+
+	db.log.Debug(fmt.Sprintf(logEnd, requestID, op))
 	return groupIdLikeGroupInNewSong, nil
 }
 
 func (db *DataBase) hasMoreThanOneSongForCurrGroup(tx *sql.Tx, groupID int, requestID string) (bool, error) {
+	const op = "hasMoreThanOneSongForCurrGroup"
+	db.log.Debug(fmt.Sprintf(logStart, requestID, op))
+
 	var songCount int
 
 	sqlStmt, err := tx.Prepare(requestSelectCountSongsByGroup())
@@ -147,14 +149,14 @@ func (db *DataBase) hasMoreThanOneSongForCurrGroup(tx *sql.Tx, groupID int, requ
 		return false, nil
 	}
 
+	db.log.Debug(fmt.Sprintf(logEnd, requestID, op))
 	return true, nil
 }
 
-func updGroup(tx *sql.Tx, e *service.EnrichedSong, foundMoreTwoSongsByCurrGroup bool, groupID, songID, groupIdLikeGroupInNewSong int) error {
-	//fmt.Println("Выполняем updGround")
+func (db *DataBase) updGroup(tx *sql.Tx, e *service.EnrichedSong, foundMoreTwoSongsByCurrGroup bool, songID, groupIdLikeGroupInNewSong int, requestID string) error {
+	const op = "updGroup"
+	db.log.Debug(fmt.Sprintf(logStart, requestID, op))
 
-	//Случай, когда новой группы нет в таблице music_groups, но есть больше 1 песни у старой группы или
-	//Случай, когда у существующей группы больше 2х песен и новой группы нет в БД
 	if (!foundMoreTwoSongsByCurrGroup && groupIdLikeGroupInNewSong == 0) ||
 		(foundMoreTwoSongsByCurrGroup && groupIdLikeGroupInNewSong == 0) {
 		newGroupID, err := createNewGroup(tx, e)
@@ -168,8 +170,6 @@ func updGroup(tx *sql.Tx, e *service.EnrichedSong, foundMoreTwoSongsByCurrGroup 
 		}
 	}
 
-	//Случай, когда у существующей группы одна песня, но новая группа уже есть в БД или
-	//Случай, когда у существующей группы больше 2х песен и новая группа есть в БД
 	if (!foundMoreTwoSongsByCurrGroup && groupIdLikeGroupInNewSong != 0) ||
 		(foundMoreTwoSongsByCurrGroup && groupIdLikeGroupInNewSong != 0) {
 		err := updGroupIdInSongsBySongID(tx, groupIdLikeGroupInNewSong, songID)
@@ -178,6 +178,7 @@ func updGroup(tx *sql.Tx, e *service.EnrichedSong, foundMoreTwoSongsByCurrGroup 
 		}
 	}
 
+	db.log.Debug(fmt.Sprintf(logEnd, requestID, op))
 	return nil
 }
 
@@ -215,22 +216,11 @@ func updGroupIdInSongsBySongID(tx *sql.Tx, newGroupID, songID int) error {
 	return nil
 }
 
-func updateGroupForSingleSongBySuchGroup(tx *sql.Tx, e *service.EnrichedSong, groupIDInMusicGroupsTable int) error {
-	sqlStmt, err := tx.Prepare(requestUpdateGroupForSingleSongBySuchGroup())
-	if err != nil {
-		return fmt.Errorf(errStmt, err)
-	}
-	defer func() { _ = sqlStmt.Close() }()
+func (db *DataBase) updSong(tx *sql.Tx, e *service.EnrichedSong, songID int, requestID string) (bool, error) {
+	const op = "updSong"
+	db.log.Debug(fmt.Sprintf(logStart, requestID, op))
 
-	_, err = sqlStmt.Exec(e.Group, groupIDInMusicGroupsTable)
-	if err != nil {
-		return fmt.Errorf(errExec, err)
-	}
-	return nil
-}
-
-func updSong(tx *sql.Tx, e *service.EnrichedSong, songID int) (bool, error) {
-	query, args := createQueryUpdSong(e, songID)
+	query, args := db.createQueryUpdSong(e, songID, requestID)
 
 	if len(args) == 0 {
 		return false, nil
@@ -247,10 +237,14 @@ func updSong(tx *sql.Tx, e *service.EnrichedSong, songID int) (bool, error) {
 		return false, fmt.Errorf(errExec, err)
 	}
 
+	db.log.Debug(fmt.Sprintf(logEnd, requestID, op))
 	return true, nil
 }
 
-func createQueryUpdSong(e *service.EnrichedSong, songID int) (string, []interface{}) {
+func (db *DataBase) createQueryUpdSong(e *service.EnrichedSong, songID int, requestID string) (string, []interface{}) {
+	const op = "createQueryUpdSong"
+	db.log.Debug(fmt.Sprintf(logStart, requestID, op))
+
 	var buf bytes.Buffer
 	var args []interface{}
 
@@ -258,25 +252,29 @@ func createQueryUpdSong(e *service.EnrichedSong, songID int) (string, []interfac
 
 	if e.Song != "" {
 		args = append(args, e.Song)
-		buf.WriteString(fmt.Sprintf("song = $%d", len(args)))
+		buf.WriteString(fmt.Sprintf("song = $%d, ", len(args)))
 	}
 	if e.ReleaseDate != "" {
 		args = append(args, e.ReleaseDate)
-		buf.WriteString(fmt.Sprintf("release_date = $%d", len(args)))
+		buf.WriteString(fmt.Sprintf("release_date = $%d, ", len(args)))
 	}
 	if e.Lyrics != "" {
 		args = append(args, e.Lyrics)
-		buf.WriteString(fmt.Sprintf("lyrics = $%d", len(args)))
+		buf.WriteString(fmt.Sprintf("lyrics = $%d, ", len(args)))
 	}
 	if e.Link != "" {
 		args = append(args, e.Link)
-		buf.WriteString(fmt.Sprintf("link = $%d", len(args)))
+		buf.WriteString(fmt.Sprintf("link = $%d, ", len(args)))
 	}
 
 	if len(args) > 0 {
 		args = append(args, songID)
+		buf.Truncate(buf.Len() - 2) //убираем последнюю зпт из запроса
 		buf.WriteString(fmt.Sprintf(" WHERE s_id = $%d", len(args)))
 	}
+	query := buf.String()
 
-	return buf.String(), args
+	db.log.Debug(fmt.Sprintf("sql-запрос: %s", query))
+	db.log.Debug(fmt.Sprintf(logEnd, requestID, op))
+	return query, args
 }

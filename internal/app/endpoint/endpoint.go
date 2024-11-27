@@ -72,7 +72,7 @@ func (e *Endpoint) HandlerAddSong(w http.ResponseWriter, r *http.Request) {
 // @Tags			songs
 // @Produce		json
 // @Param			songID	path	int	true	"id существующей песни"
-// @Success		204		"Запись успешно создана"
+// @Success		204		"Запись отсутствует в БД"
 // @Failure		400		{object}	ResponseDel400	"Ошибка валидации данных"
 // @Failure		405		{object}	ResponseDel405	"Метод не разрешен"
 // @Failure		500		{object}	ResponsePost500	"Ошибка сервера"
@@ -101,7 +101,7 @@ func (e *Endpoint) HandlerDeleteSong(w http.ResponseWriter, r *http.Request) {
 // @Produce		json
 // @Param			songID	path		int					true	"id существующей песни"
 // @Param			offset	query		int					false	"Смещение для пагинации"
-// @Param			limit	query		int					false	"Количество записей для пагинации"
+// @Param			limit	query		int					true	"Количество записей для пагинации"
 // @Success		200		{object}	ResponseLirycs200	"Запись успешно создана"
 // @Failure		400		{object}	ResponseLirycs400	"Ошибка валидации данных"
 // @Failure		404		{object}	ResponseLirycs404	"Ресурс не найден"
@@ -128,13 +128,13 @@ func (e *Endpoint) HandlerLiryc(w http.ResponseWriter, r *http.Request) {
 // @Summary		Получить перечень песен
 // @Description	Получает данные библиотеки с фильтрацией и пагинацией.
 // @Description	Параметры фильтрации и пагинации передаются в параметрах запроса. ID песни передаётся как часть пути в URL.
-// @Description	Фильтр даты передавать в формате
+// @Description	Фильтр даты передавать в формате дд.мм.гггг
 // @Tags			songs
 // @Produce		json
 // @Param			songID	path		int				true	"id существующей песни"
 // @Param			filter	query		string				true	"Фильтр поиска. Возможные значения: releaseDate, group, song, например releaseDate.26.08.1968, group.Muse, song.Supermassive Black Hole"
 // @Param			offset	query		int					false	"Смещение для пагинации"
-// @Param			limit	query		int					false	"Количество записей для пагинации"
+// @Param			limit	query		int					true	"Количество записей для пагинации"
 // @Success		200		{object}	ResponseLibrary200	"Запись успешно создана"
 // @Failure		400		{object}	ResponseLibrary400	"Ошибка валидации данных"
 // @Failure		404		{object}	ResponseLibrary404	"Ресурс не найден"

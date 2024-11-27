@@ -17,7 +17,8 @@ import (
 )
 
 type DataBase struct {
-	db *sql.DB
+	db  *sql.DB
+	log *logger.Logger
 }
 
 const dirMigrations = "migrations"
@@ -28,7 +29,8 @@ func MustNew(cfg *config.Config, logger *logger.Logger) *DataBase {
 		log.Fatalf(errCreateDB, err)
 	}
 	return &DataBase{
-		db: db,
+		db:  db,
+		log: logger,
 	}
 }
 
