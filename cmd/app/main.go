@@ -7,7 +7,7 @@ import (
 
 // @title						Онлайн-библиотека музыки
 // @version					1.0
-// @description				Проект Effective Mobile
+// @description				Проект для Effective Mobile
 // @contact.name				Евгений
 // @contact.url				https://github.com/jedyEvgeny
 // @contact.email				KEF1991@yandex.ru
@@ -18,11 +18,11 @@ import (
 // @accept						json
 // @produce					json text/plain
 // @schemes					http
-// @externalDocs.description	"Резерв для дополнительного описания API"
-// @externalDocs.url			https://t.me/+ZGac_D1V4wFjYzRi
+// @externalDocs.description	"Readme на GitHub"
+// @externalDocs.url			https://github.com/jedyEvgeny/online-music-library/blob/main/README.MD
 // @x-name						{"environment": "production", "version": "1.0.0", "team": "backend"}
-// @tag.name					items
-// @tag.description			Операции с товарами
+// @tag.name					Music-library
+// @tag.description			Хранилище информации о музыкальных произведениях
 // @tag.docs.url				https://t.me/EvKly
 // @tag.docs.description		Связь с автором в Телеграм
 func main() {

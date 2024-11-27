@@ -29,6 +29,143 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/list/{songID}": {
+            "get": {
+                "description": "Получает данные библиотеки с фильтрацией и пагинацией.\nПараметры фильтрации и пагинации передаются в параметрах запроса. ID песни передаётся как часть пути в URL.\nФильтр даты передавать в формате",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "songs"
+                ],
+                "summary": "Получить перечень песен",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "id существующей песни",
+                        "name": "songID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Фильтр поиска. Возможные значения: releaseDate, group, song, например releaseDate.26.08.1968, group.Muse, song.Supermassive Black Hole",
+                        "name": "filter",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Смещение для пагинации",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Количество записей для пагинации",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Запись успешно создана",
+                        "schema": {
+                            "$ref": "#/definitions/endpoint.ResponseLibrary200"
+                        }
+                    },
+                    "400": {
+                        "description": "Ошибка валидации данных",
+                        "schema": {
+                            "$ref": "#/definitions/endpoint.ResponseLibrary400"
+                        }
+                    },
+                    "404": {
+                        "description": "Ресурс не найден",
+                        "schema": {
+                            "$ref": "#/definitions/endpoint.ResponseLibrary404"
+                        }
+                    },
+                    "405": {
+                        "description": "Метод не разрешен",
+                        "schema": {
+                            "$ref": "#/definitions/endpoint.ResponseLibrary405"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/endpoint.ResponseLibrary500"
+                        }
+                    }
+                }
+            }
+        },
+        "/lyrics/{songID}": {
+            "get": {
+                "description": "Получает текст песни с пагинацией по куплетам.\nID песни передаётся в URL, параметры пагинации в параметрах запроса.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "songs"
+                ],
+                "summary": "Получить текст песни",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "id существующей песни",
+                        "name": "songID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Смещение для пагинации",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Количество записей для пагинации",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Запись успешно создана",
+                        "schema": {
+                            "$ref": "#/definitions/endpoint.ResponseLirycs200"
+                        }
+                    },
+                    "400": {
+                        "description": "Ошибка валидации данных",
+                        "schema": {
+                            "$ref": "#/definitions/endpoint.ResponseLirycs400"
+                        }
+                    },
+                    "404": {
+                        "description": "Ресурс не найден",
+                        "schema": {
+                            "$ref": "#/definitions/endpoint.ResponseLirycs404"
+                        }
+                    },
+                    "405": {
+                        "description": "Метод не разрешен",
+                        "schema": {
+                            "$ref": "#/definitions/endpoint.ResponseLirycs405"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/endpoint.ResponseLirycs500"
+                        }
+                    }
+                }
+            }
+        },
         "/song-add": {
             "post": {
                 "description": "Добавляет новую песню.\nНаименование песни и группа передаются в теле запроса в json-объекте.\nПри создании песни происходит обращение к удалённому серверу для обогащения информации.",
@@ -81,7 +218,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/song-del/{id}": {
+        "/song-del/{songID}": {
             "delete": {
                 "description": "Удаляет песню.\nID песни передаётся в URL.\nПри отсутствии песни возвращается статус 204, как если бы песня была и успешно удалена.",
                 "produces": [
@@ -124,9 +261,91 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/song-upd/{songID}": {
+            "patch": {
+                "description": "Изменяет один или несколько параметров песни.\nID песни передаётся как часть пути, параметры песни - в теле запроса.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "songs"
+                ],
+                "summary": "Изменить параметры песни",
+                "parameters": [
+                    {
+                        "description": "Возможные поля для изменения",
+                        "name": "song",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/endpoint.EnrichedSong"
+                        }
+                    },
+                    {
+                        "type": "integer",
+                        "description": "id существующей песни",
+                        "name": "songID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Запись успешно создана",
+                        "schema": {
+                            "$ref": "#/definitions/endpoint.ResponseUpdate200"
+                        }
+                    },
+                    "400": {
+                        "description": "Ошибка валидации данных",
+                        "schema": {
+                            "$ref": "#/definitions/endpoint.ResponseLibrary400"
+                        }
+                    },
+                    "404": {
+                        "description": "Ресурс не найден",
+                        "schema": {
+                            "$ref": "#/definitions/endpoint.ResponseLibrary404"
+                        }
+                    },
+                    "405": {
+                        "description": "Метод не разрешен",
+                        "schema": {
+                            "$ref": "#/definitions/endpoint.ResponseUpdate405"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/endpoint.ResponseLibrary500"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "endpoint.EnrichedSong": {
+            "type": "object",
+            "properties": {
+                "group": {
+                    "type": "string",
+                    "example": "Mobile"
+                },
+                "releaseDate": {
+                    "type": "string",
+                    "example": "27.11.2024"
+                },
+                "song": {
+                    "type": "string",
+                    "example": "Hey Effective"
+                }
+            }
+        },
         "endpoint.ResponseDel400": {
             "type": "object",
             "properties": {
@@ -154,6 +373,218 @@ const docTemplate = `{
                 "statusCode": {
                     "type": "integer",
                     "example": 405
+                },
+                "sucsess": {
+                    "type": "boolean",
+                    "example": false
+                }
+            }
+        },
+        "endpoint.ResponseLibrary200": {
+            "type": "object",
+            "properties": {
+                "library": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "group": {
+                                "type": "string",
+                                "example": "The Beatles"
+                            },
+                            "link": {
+                                "type": "string",
+                                "example": "https://rutube.ru/video/6c6b701206f28fd2767d14f9b495e674/"
+                            },
+                            "lyrics": {
+                                "type": "string",
+                                "example": "[\"[Verse 1]\\nHey, Jude, don't make it bad\\nTake a sad song and make it better\\n...\", \"[Verse 2]\\nHey, Jude, don't be afraid\\nYou were made to go out and get her\\n...\"]"
+                            },
+                            "releaseDate": {
+                                "type": "string",
+                                "example": "26.08.1968"
+                            },
+                            "song": {
+                                "type": "string",
+                                "example": "Hey Jude"
+                            }
+                        }
+                    }
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Ресурс существует"
+                },
+                "statusCode": {
+                    "type": "integer",
+                    "example": 200
+                },
+                "sucsess": {
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "endpoint.ResponseLibrary400": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "не смогли прочитать параметр запроса"
+                },
+                "statusCode": {
+                    "type": "integer",
+                    "example": 400
+                },
+                "sucsess": {
+                    "type": "boolean",
+                    "example": false
+                }
+            }
+        },
+        "endpoint.ResponseLibrary404": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "отсутствуют данные в БД: sql: no rows in result set"
+                },
+                "statusCode": {
+                    "type": "integer",
+                    "example": 404
+                },
+                "sucsess": {
+                    "type": "boolean",
+                    "example": false
+                }
+            }
+        },
+        "endpoint.ResponseLibrary405": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "ошибка метода. Ожидался: GET, имеется: POST"
+                },
+                "statusCode": {
+                    "type": "integer",
+                    "example": 405
+                },
+                "sucsess": {
+                    "type": "boolean",
+                    "example": false
+                }
+            }
+        },
+        "endpoint.ResponseLibrary500": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "ошибка подключения к БД"
+                },
+                "statusCode": {
+                    "type": "integer",
+                    "example": 500
+                },
+                "sucsess": {
+                    "type": "boolean",
+                    "example": false
+                }
+            }
+        },
+        "endpoint.ResponseLirycs200": {
+            "type": "object",
+            "properties": {
+                "lyrics": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "[\"[Verse 1]\\nHey",
+                        " Jude",
+                        " don't make it bad\\nTake a sad song and make it better\\n...\"",
+                        " \"[Verse 2]\\nHey",
+                        " Jude",
+                        " don't be afraid\\nYou were made to go out and get her\\n...\"]"
+                    ]
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Ресурс существует"
+                },
+                "statusCode": {
+                    "type": "integer",
+                    "example": 200
+                },
+                "sucsess": {
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "endpoint.ResponseLirycs400": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "ошибка: strconv.Atoi: parsing \"f\": invalid syntax. 'id_song' не число. Имеется: f"
+                },
+                "statusCode": {
+                    "type": "integer",
+                    "example": 400
+                },
+                "sucsess": {
+                    "type": "boolean",
+                    "example": false
+                }
+            }
+        },
+        "endpoint.ResponseLirycs404": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "отсутствуют данные в БД: sql: no rows in result set"
+                },
+                "statusCode": {
+                    "type": "integer",
+                    "example": 404
+                },
+                "sucsess": {
+                    "type": "boolean",
+                    "example": false
+                }
+            }
+        },
+        "endpoint.ResponseLirycs405": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "ошибка метода. Ожидался: GET, имеется: POST"
+                },
+                "statusCode": {
+                    "type": "integer",
+                    "example": 405
+                },
+                "sucsess": {
+                    "type": "boolean",
+                    "example": false
+                }
+            }
+        },
+        "endpoint.ResponseLirycs500": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "ошибка подключения к БД"
+                },
+                "statusCode": {
+                    "type": "integer",
+                    "example": 500
                 },
                 "sucsess": {
                     "type": "boolean",
@@ -233,6 +664,40 @@ const docTemplate = `{
                 }
             }
         },
+        "endpoint.ResponseUpdate200": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Ресурс обновлён"
+                },
+                "statusCode": {
+                    "type": "integer",
+                    "example": 200
+                },
+                "sucsess": {
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "endpoint.ResponseUpdate405": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "ошибка метода. Ожидался: PATCH, имеется: POST"
+                },
+                "statusCode": {
+                    "type": "integer",
+                    "example": 405
+                },
+                "sucsess": {
+                    "type": "boolean",
+                    "example": false
+                }
+            }
+        },
         "endpoint.Song": {
             "type": "object",
             "properties": {
@@ -249,8 +714,8 @@ const docTemplate = `{
     },
     "tags": [
         {
-            "description": "Операции с товарами",
-            "name": "items",
+            "description": "Хранилище информации о музыкальных произведениях",
+            "name": "Music-library",
             "externalDocs": {
                 "description": "Связь с автором в Телеграм",
                 "url": "https://t.me/EvKly"
@@ -258,8 +723,8 @@ const docTemplate = `{
         }
     ],
     "externalDocs": {
-        "description": "\"Резерв для дополнительного описания API\"",
-        "url": "https://t.me/+ZGac_D1V4wFjYzRi"
+        "description": "\"Readme на GitHub\"",
+        "url": "https://github.com/jedyEvgeny/online-music-library/blob/main/README.MD"
     },
     "x-name": {
         "environment": "production",
@@ -275,7 +740,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "/",
 	Schemes:          []string{"http"},
 	Title:            "Онлайн-библиотека музыки",
-	Description:      "Проект Effective Mobile",
+	Description:      "Проект для Effective Mobile",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

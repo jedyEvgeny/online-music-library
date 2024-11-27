@@ -123,7 +123,9 @@ func createLirycsResponse(ok bool, statusCode int, msg, requestID string, lirycs
 		Sucsess:    ok,
 		Message:    msg,
 		StatusCode: statusCode,
-		Lirycs:     *lirycs,
+	}
+	if lirycs != nil {
+		resp.Lirycs = *lirycs
 	}
 	dataJson, err := json.Marshal(resp)
 	if err != nil {

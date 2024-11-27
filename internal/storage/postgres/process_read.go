@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"jedyEvgeny/online-music-library/internal/app/service"
+	"log"
 	"net/http"
 )
 
@@ -30,7 +31,6 @@ func (db *DataBase) ReadLibrary(f *service.FilterAndPaggination, requestID strin
 	if err == sql.ErrNoRows {
 		return nil, http.StatusNotFound, err
 	}
-
 	return songs, http.StatusOK, nil
 }
 
@@ -51,17 +51,20 @@ func (db *DataBase) ReadLirycs(songID int, requestID string) (liryc string, stat
 	}()
 
 	liryc, err = db.findLirycsBySongID(tx, songID, requestID)
-	if err != nil && err != sql.ErrNoRows {
+	if err == sql.ErrNoRows {
+		return "", http.StatusNotFound, fmt.Errorf(errNoContent, err)
+	}
+	if err != nil {
 		return "", http.StatusInternalServerError, err
 	}
-	if err == sql.ErrNoRows {
-		return "", http.StatusNotFound, err
-	}
 
-	return liryc, 0, nil
+	return liryc, http.StatusOK, nil
 }
 
 func (db *DataBase) findLirycsBySongID(tx *sql.Tx, songID int, requestID string) (string, error) {
+	op := "findLirycsBySongID"
+	log.Printf(msgStart, op)
+
 	var liryc string
 
 	sqlStmt, err := tx.Prepare(requestSelectLirycsBySongID())
@@ -73,14 +76,21 @@ func (db *DataBase) findLirycsBySongID(tx *sql.Tx, songID int, requestID string)
 	err = sqlStmt.QueryRow(
 		songID,
 	).Scan(&liryc)
-
+	if err == sql.ErrNoRows {
+		return "", err
+	}
 	if err != nil {
 		return "", fmt.Errorf(errExec, err)
 	}
+
+	log.Printf(msgEnd, op)
 	return liryc, nil
 }
 
 func (db *DataBase) findSongsByFilter(tx *sql.Tx, f *service.FilterAndPaggination, requestID string) (*[]service.EnrichedSong, int, error) {
+	op := "findSongsByFilter"
+	log.Printf(msgStart, op)
+
 	query, arg := createQueryForFilterAndPaggination(f)
 
 	sqlStmt, err := tx.Prepare(query)

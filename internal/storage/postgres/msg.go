@@ -7,6 +7,8 @@ const (
 	msgTimeInsert        = "[%s] информация внесена в БД за время: %v"
 	msgTimeSelect        = "[%s] информация найдена в БД за время: %v"
 	msgResAffected       = "[%s] не выполнены изменения в БД: %v"
+	msgStart             = "Запущена функция %s\n"
+	msgEnd               = "Завершена функция %s\n"
 )
 
 const (

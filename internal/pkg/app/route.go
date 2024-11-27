@@ -1,6 +1,10 @@
 package app
 
-import "net/http"
+import (
+	"net/http"
+
+	httpSwagger "github.com/swaggo/http-swagger"
+)
 
 type routeServer struct {
 	Library    string
@@ -8,11 +12,14 @@ type routeServer struct {
 	DeleteSong string
 	UpdateSong string
 	AddSong    string
+	Swagger    string
 }
 
 type routeClient struct {
 	GetSong string
 }
+
+const pathSwaggerJson = "./docs/swagger.json"
 
 func newRouteServer() *routeServer {
 	return &routeServer{
@@ -21,6 +28,7 @@ func newRouteServer() *routeServer {
 		DeleteSong: "/song-del/",
 		UpdateSong: "/song-upd/",
 		AddSong:    "/song-add",
+		Swagger:    "/swagger/doc.json",
 	}
 }
 
@@ -38,4 +46,10 @@ func (a *App) configureRoutes() {
 	http.HandleFunc(a.routeServer.DeleteSong, a.endpoint.HandlerDeleteSong)
 	http.HandleFunc(a.routeServer.Library, a.endpoint.HandlerLibrary)
 	http.HandleFunc(a.routeServer.UpdateSong, a.endpoint.HandlerPatchSong)
+
+	http.HandleFunc(a.routeServer.Swagger, func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		http.ServeFile(w, r, pathSwaggerJson)
+	})
+	http.Handle("/swagger/", httpSwagger.WrapHandler)
 }

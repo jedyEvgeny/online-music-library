@@ -2,6 +2,18 @@ basePath: /
 consumes:
 - application/json
 definitions:
+  endpoint.EnrichedSong:
+    properties:
+      group:
+        example: Mobile
+        type: string
+      releaseDate:
+        example: 27.11.2024
+        type: string
+      song:
+        example: Hey Effective
+        type: string
+    type: object
   endpoint.ResponseDel400:
     properties:
       message:
@@ -21,6 +33,160 @@ definitions:
         type: string
       statusCode:
         example: 405
+        type: integer
+      sucsess:
+        example: false
+        type: boolean
+    type: object
+  endpoint.ResponseLibrary200:
+    properties:
+      library:
+        items:
+          properties:
+            group:
+              example: The Beatles
+              type: string
+            link:
+              example: https://rutube.ru/video/6c6b701206f28fd2767d14f9b495e674/
+              type: string
+            lyrics:
+              example: '["[Verse 1]\nHey, Jude, don''t make it bad\nTake a sad song
+                and make it better\n...", "[Verse 2]\nHey, Jude, don''t be afraid\nYou
+                were made to go out and get her\n..."]'
+              type: string
+            releaseDate:
+              example: 26.08.1968
+              type: string
+            song:
+              example: Hey Jude
+              type: string
+          type: object
+        type: array
+      message:
+        example: Ресурс существует
+        type: string
+      statusCode:
+        example: 200
+        type: integer
+      sucsess:
+        example: true
+        type: boolean
+    type: object
+  endpoint.ResponseLibrary400:
+    properties:
+      message:
+        example: не смогли прочитать параметр запроса
+        type: string
+      statusCode:
+        example: 400
+        type: integer
+      sucsess:
+        example: false
+        type: boolean
+    type: object
+  endpoint.ResponseLibrary404:
+    properties:
+      message:
+        example: 'отсутствуют данные в БД: sql: no rows in result set'
+        type: string
+      statusCode:
+        example: 404
+        type: integer
+      sucsess:
+        example: false
+        type: boolean
+    type: object
+  endpoint.ResponseLibrary405:
+    properties:
+      message:
+        example: 'ошибка метода. Ожидался: GET, имеется: POST'
+        type: string
+      statusCode:
+        example: 405
+        type: integer
+      sucsess:
+        example: false
+        type: boolean
+    type: object
+  endpoint.ResponseLibrary500:
+    properties:
+      message:
+        example: ошибка подключения к БД
+        type: string
+      statusCode:
+        example: 500
+        type: integer
+      sucsess:
+        example: false
+        type: boolean
+    type: object
+  endpoint.ResponseLirycs200:
+    properties:
+      lyrics:
+        example:
+        - '["[Verse 1]\nHey'
+        - ' Jude'
+        - ' don''t make it bad\nTake a sad song and make it better\n..."'
+        - ' "[Verse 2]\nHey'
+        - ' Jude'
+        - ' don''t be afraid\nYou were made to go out and get her\n..."]'
+        items:
+          type: string
+        type: array
+      message:
+        example: Ресурс существует
+        type: string
+      statusCode:
+        example: 200
+        type: integer
+      sucsess:
+        example: true
+        type: boolean
+    type: object
+  endpoint.ResponseLirycs400:
+    properties:
+      message:
+        example: 'ошибка: strconv.Atoi: parsing "f": invalid syntax. ''id_song'' не
+          число. Имеется: f'
+        type: string
+      statusCode:
+        example: 400
+        type: integer
+      sucsess:
+        example: false
+        type: boolean
+    type: object
+  endpoint.ResponseLirycs404:
+    properties:
+      message:
+        example: 'отсутствуют данные в БД: sql: no rows in result set'
+        type: string
+      statusCode:
+        example: 404
+        type: integer
+      sucsess:
+        example: false
+        type: boolean
+    type: object
+  endpoint.ResponseLirycs405:
+    properties:
+      message:
+        example: 'ошибка метода. Ожидался: GET, имеется: POST'
+        type: string
+      statusCode:
+        example: 405
+        type: integer
+      sucsess:
+        example: false
+        type: boolean
+    type: object
+  endpoint.ResponseLirycs500:
+    properties:
+      message:
+        example: ошибка подключения к БД
+        type: string
+      statusCode:
+        example: 500
         type: integer
       sucsess:
         example: false
@@ -77,6 +243,30 @@ definitions:
         example: false
         type: boolean
     type: object
+  endpoint.ResponseUpdate200:
+    properties:
+      message:
+        example: Ресурс обновлён
+        type: string
+      statusCode:
+        example: 200
+        type: integer
+      sucsess:
+        example: true
+        type: boolean
+    type: object
+  endpoint.ResponseUpdate405:
+    properties:
+      message:
+        example: 'ошибка метода. Ожидался: PATCH, имеется: POST'
+        type: string
+      statusCode:
+        example: 405
+        type: integer
+      sucsess:
+        example: false
+        type: boolean
+    type: object
   endpoint.Song:
     properties:
       group:
@@ -87,21 +277,118 @@ definitions:
         type: string
     type: object
 externalDocs:
-  description: '"Резерв для дополнительного описания API"'
-  url: https://t.me/+ZGac_D1V4wFjYzRi
+  description: '"Readme на GitHub"'
+  url: https://github.com/jedyEvgeny/online-music-library/blob/main/README.MD
 host: localhost:8080
 info:
   contact:
     email: KEF1991@yandex.ru
     name: Евгений
     url: https://github.com/jedyEvgeny
-  description: Проект Effective Mobile
+  description: Проект для Effective Mobile
   license:
     name: MIT
     url: http://opensource.org/licenses/MIT
   title: Онлайн-библиотека музыки
   version: "1.0"
 paths:
+  /list/{songID}:
+    get:
+      description: |-
+        Получает данные библиотеки с фильтрацией и пагинацией.
+        Параметры фильтрации и пагинации передаются в параметрах запроса. ID песни передаётся как часть пути в URL.
+        Фильтр даты передавать в формате
+      parameters:
+      - description: id существующей песни
+        in: path
+        name: songID
+        required: true
+        type: integer
+      - description: 'Фильтр поиска. Возможные значения: releaseDate, group, song,
+          например releaseDate.26.08.1968, group.Muse, song.Supermassive Black Hole'
+        in: query
+        name: filter
+        required: true
+        type: string
+      - description: Смещение для пагинации
+        in: query
+        name: offset
+        type: integer
+      - description: Количество записей для пагинации
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Запись успешно создана
+          schema:
+            $ref: '#/definitions/endpoint.ResponseLibrary200'
+        "400":
+          description: Ошибка валидации данных
+          schema:
+            $ref: '#/definitions/endpoint.ResponseLibrary400'
+        "404":
+          description: Ресурс не найден
+          schema:
+            $ref: '#/definitions/endpoint.ResponseLibrary404'
+        "405":
+          description: Метод не разрешен
+          schema:
+            $ref: '#/definitions/endpoint.ResponseLibrary405'
+        "500":
+          description: Ошибка сервера
+          schema:
+            $ref: '#/definitions/endpoint.ResponseLibrary500'
+      summary: Получить перечень песен
+      tags:
+      - songs
+  /lyrics/{songID}:
+    get:
+      description: |-
+        Получает текст песни с пагинацией по куплетам.
+        ID песни передаётся в URL, параметры пагинации в параметрах запроса.
+      parameters:
+      - description: id существующей песни
+        in: path
+        name: songID
+        required: true
+        type: integer
+      - description: Смещение для пагинации
+        in: query
+        name: offset
+        type: integer
+      - description: Количество записей для пагинации
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Запись успешно создана
+          schema:
+            $ref: '#/definitions/endpoint.ResponseLirycs200'
+        "400":
+          description: Ошибка валидации данных
+          schema:
+            $ref: '#/definitions/endpoint.ResponseLirycs400'
+        "404":
+          description: Ресурс не найден
+          schema:
+            $ref: '#/definitions/endpoint.ResponseLirycs404'
+        "405":
+          description: Метод не разрешен
+          schema:
+            $ref: '#/definitions/endpoint.ResponseLirycs405'
+        "500":
+          description: Ошибка сервера
+          schema:
+            $ref: '#/definitions/endpoint.ResponseLirycs500'
+      summary: Получить текст песни
+      tags:
+      - songs
   /song-add:
     post:
       consumes:
@@ -139,7 +426,7 @@ paths:
       summary: Добавить песню
       tags:
       - songs
-  /song-del/{id}:
+  /song-del/{songID}:
     delete:
       description: |-
         Удаляет песню.
@@ -171,17 +458,62 @@ paths:
       summary: Удалить песню
       tags:
       - songs
+  /song-upd/{songID}:
+    patch:
+      consumes:
+      - application/json
+      description: |-
+        Изменяет один или несколько параметров песни.
+        ID песни передаётся как часть пути, параметры песни - в теле запроса.
+      parameters:
+      - description: Возможные поля для изменения
+        in: body
+        name: song
+        required: true
+        schema:
+          $ref: '#/definitions/endpoint.EnrichedSong'
+      - description: id существующей песни
+        in: path
+        name: songID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Запись успешно создана
+          schema:
+            $ref: '#/definitions/endpoint.ResponseUpdate200'
+        "400":
+          description: Ошибка валидации данных
+          schema:
+            $ref: '#/definitions/endpoint.ResponseLibrary400'
+        "404":
+          description: Ресурс не найден
+          schema:
+            $ref: '#/definitions/endpoint.ResponseLibrary404'
+        "405":
+          description: Метод не разрешен
+          schema:
+            $ref: '#/definitions/endpoint.ResponseUpdate405'
+        "500":
+          description: Ошибка сервера
+          schema:
+            $ref: '#/definitions/endpoint.ResponseLibrary500'
+      summary: Изменить параметры песни
+      tags:
+      - songs
 produces:
 - json text/plain
 schemes:
 - http
 swagger: "2.0"
 tags:
-- description: Операции с товарами
+- description: Хранилище информации о музыкальных произведениях
   externalDocs:
     description: Связь с автором в Телеграм
     url: https://t.me/EvKly
-  name: items
+  name: Music-library
 x-name:
   environment: production
   team: backend
