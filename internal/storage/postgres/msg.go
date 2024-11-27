@@ -2,13 +2,13 @@ package storage
 
 const (
 	msgTimePing          = "Пинг к БД %s выполнен за %v"
-	msgMigrationsNotNeed = "нет изменений схемы БД. Миграции не требуются"
+	msgMigrationsNotNeed = "Нет изменений схемы БД. Миграции не требуются"
 	msgMigrationsDone    = "Миграции применены"
 	msgTimeInsert        = "[%s] информация внесена в БД за время: %v"
 	msgTimeSelect        = "[%s] информация найдена в БД за время: %v"
 	msgResAffected       = "[%s] не выполнены изменения в БД: %v"
-	msgStart             = "Запущена функция %s\n"
-	msgEnd               = "Завершена функция %s\n"
+	msgStart             = "Запущена функция %s"
+	msgEnd               = "Завершена функция %s"
 )
 
 const (

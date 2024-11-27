@@ -16,24 +16,30 @@ import (
 func (s *Service) ProseccAddSongRequest(r *http.Request, requestID string) ([]byte, int) {
 	defer closeRequestBody(r.Body)
 
-	req, statusCode, errResponse := validateAddSongRequest(r, requestID)
+	req, statusCode, errResponse := s.validateAddSongRequest(r, requestID)
 	if statusCode != http.StatusOK {
+		s.log.Debug(fmt.Sprintf(logErrValidate, requestID, string(errResponse)))
 		return errResponse, statusCode
 	}
 
 	response, statusCode := s.processAddSong(req, requestID)
+
+	s.log.Debug(fmt.Sprintf(logToEndpoin, requestID, statusCode))
 	return response, statusCode
 }
 
 func (s *Service) ProseccDelSongRequest(r *http.Request, requestID string) ([]byte, int) {
 	defer closeRequestBody(r.Body)
 
-	id, statusCode, errResponse := validateDelSongRequest(r, requestID)
+	id, statusCode, errResponse := s.validateDelSongRequest(r, requestID)
 	if statusCode != http.StatusNoContent {
+		s.log.Debug(fmt.Sprintf(logErrValidate, requestID, string(errResponse)))
 		return errResponse, statusCode
 	}
 
 	response, statusCode := s.delSongFromStorage(id, requestID)
+
+	s.log.Debug(fmt.Sprintf(logToEndpoin, requestID, statusCode))
 	return response, statusCode
 }
 
@@ -43,31 +49,31 @@ func closeRequestBody(b io.ReadCloser) {
 	}
 }
 
-func validateAddSongRequest(r *http.Request, requestID string) (*Song, int, []byte) {
+func (s *Service) validateAddSongRequest(r *http.Request, requestID string) (*Song, int, []byte) {
 	if r.Method != http.MethodPost {
 		msg := fmt.Sprintf(errMethod, http.MethodPost, r.Method)
-		dataJson, statusCode := createAddSongResponse(
+		dataJson, statusCode := s.createAddSongResponse(
 			false, http.StatusMethodNotAllowed, msg, requestID, nil)
 		return nil, statusCode, dataJson
 	}
 
 	req, err := decodeBodyAddSongRequest(r.Body)
 	if err != nil {
-		dataJson, statusCode := createAddSongResponse(
+		dataJson, statusCode := s.createAddSongResponse(
 			false, http.StatusBadRequest, fmt.Sprint(err), requestID, nil)
 		return nil, statusCode, dataJson
 	}
 
 	if err = validateBodyAddSongRequest(req); err != nil {
-		dataJson, statusCode := createAddSongResponse(
+		dataJson, statusCode := s.createAddSongResponse(
 			false, http.StatusBadRequest, fmt.Sprint(err), requestID, nil)
 		return nil, statusCode, dataJson
 	}
 	return req, http.StatusOK, nil
 }
 
-func createAddSongResponse(ok bool, statusCode int, msg, requestID string, id *int) ([]byte, int) {
-	log.Printf("[%s]  %s\n", requestID, msg)
+func (s *Service) createAddSongResponse(ok bool, statusCode int, msg, requestID string, id *int) ([]byte, int) {
+	s.log.Debug(fmt.Sprintf("[%s] %s", requestID, msg))
 	resp := ResponsePost{
 		Sucsess:    ok,
 		Message:    msg,
@@ -127,10 +133,10 @@ func validateBodyAddSongRequest(req *Song) error {
 	return nil
 }
 
-func validateDelSongRequest(r *http.Request, requestID string) (int, int, []byte) {
+func (s *Service) validateDelSongRequest(r *http.Request, requestID string) (int, int, []byte) {
 	if r.Method != http.MethodDelete {
 		msg := fmt.Sprintf(errMethod, http.MethodDelete, r.Method)
-		dataJson, statusCode := createPatchDelSongResponse(
+		dataJson, statusCode := s.createPatchDelSongResponse(
 			false, http.StatusMethodNotAllowed, msg, requestID)
 		return 0, statusCode, dataJson
 	}
@@ -139,15 +145,15 @@ func validateDelSongRequest(r *http.Request, requestID string) (int, int, []byte
 
 	id, err := validateParamDelSongRequest(idStr)
 	if err != nil {
-		dataJson, statusCode := createPatchDelSongResponse(
+		dataJson, statusCode := s.createPatchDelSongResponse(
 			false, http.StatusBadRequest, fmt.Sprint(err), requestID)
 		return 0, statusCode, dataJson
 	}
 	return id, http.StatusNoContent, nil
 }
 
-func createPatchDelSongResponse(ok bool, statusCode int, msg, requestID string) ([]byte, int) {
-	log.Printf("[%s]  %s\n", requestID, msg)
+func (s *Service) createPatchDelSongResponse(ok bool, statusCode int, msg, requestID string) ([]byte, int) {
+	s.log.Debug(fmt.Sprintf("[%s]  %s\n", requestID, msg))
 	resp := ResponsePatchDelete{
 		Sucsess:    ok,
 		Message:    msg,
@@ -183,7 +189,7 @@ func (s *Service) delSongFromStorage(id int, requestID string) ([]byte, int) {
 	err := s.delUpdater.Delete(id, requestID)
 
 	if err != nil {
-		dataJson, statusCode := createPatchDelSongResponse(
+		dataJson, statusCode := s.createPatchDelSongResponse(
 			false, http.StatusInternalServerError, fmt.Sprint(err), requestID)
 		return dataJson, statusCode
 	}

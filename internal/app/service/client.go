@@ -22,22 +22,22 @@ func (s *Service) processAddSong(req *Song, requestID string) ([]byte, int) {
 }
 
 func (s *Service) enrighedSong(req *Song, requestID string) (*EnrichedSong, int, []byte) {
-	dataRespClient, err := s.enricher.Update(req)
+	dataRespClient, err := s.enricher.Update(req, requestID)
 	if err != nil {
-		dataJson, statusCode := createAddSongResponse(
+		dataJson, statusCode := s.createAddSongResponse(
 			false, http.StatusInternalServerError, fmt.Sprint(err), requestID, nil)
 		return nil, statusCode, dataJson
 	}
 
 	dataClient, err := decodeBodyResponse(dataRespClient.Body)
 	if err != nil {
-		dataJson, statusCode := createAddSongResponse(
+		dataJson, statusCode := s.createAddSongResponse(
 			false, http.StatusInternalServerError, fmt.Sprint(err), requestID, nil)
 		return nil, statusCode, dataJson
 	}
 
 	if err = validateEnrichedSongFields(dataClient); err != nil {
-		dataJson, statusCode := createAddSongResponse(
+		dataJson, statusCode := s.createAddSongResponse(
 			false, http.StatusInternalServerError, fmt.Sprint(err), requestID, nil)
 		return nil, statusCode, dataJson
 	}
@@ -94,10 +94,10 @@ func (s *Service) saveSongToStorage(req *Song, dataClient *EnrichedSong, request
 
 	idSong, err := s.repository.Write(enrichedData, requestID)
 	if err != nil {
-		dataJson, statusCode := createAddSongResponse(false, http.StatusInternalServerError, fmt.Sprint(err), requestID, nil)
+		dataJson, statusCode := s.createAddSongResponse(false, http.StatusInternalServerError, fmt.Sprint(err), requestID, nil)
 		return dataJson, statusCode
 	}
-	dataJson, statusCode := createAddSongResponse(
+	dataJson, statusCode := s.createAddSongResponse(
 		true, http.StatusCreated, msg201, requestID, &idSong)
 	return dataJson, statusCode
 }

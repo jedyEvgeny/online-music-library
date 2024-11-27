@@ -1,7 +1,8 @@
 package endpoint
 
 import (
-	"log"
+	"fmt"
+	"jedyEvgeny/online-music-library/pkg/logger"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -19,19 +20,22 @@ type UpdateReader interface {
 }
 
 type Endpoint struct {
+	log     *logger.Logger
 	process delAdder
 	update  UpdateReader
 }
 
-func New(c delAdder, u UpdateReader) *Endpoint {
+func New(l *logger.Logger, c delAdder, u UpdateReader) *Endpoint {
 	return &Endpoint{
+		log:     l,
 		process: c,
 		update:  u,
 	}
 }
 
 const (
-	msgRequest = "[%s] Получен запрос с методом: %s от URL: %s. Обработчик: %s\n"
+	msgRequest     = "[%s] Получен запрос с методом: %s от URL: %s. Обработчик: %s"
+	msgRequestDone = "[%s] запрос обработан и ответ направлен клиенту"
 )
 
 // @Summary		Добавить песню
@@ -50,13 +54,15 @@ const (
 func (e *Endpoint) HandlerAddSong(w http.ResponseWriter, r *http.Request) {
 	h := "HandlerAddSong"
 	reqID := requestID()
-	log.Printf(msgRequest, reqID, r.Method, r.URL, h)
+	e.log.Debug(fmt.Sprintf(msgRequest, reqID, r.Method, r.URL, h))
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
 	resp, status := e.process.ProseccAddSongRequest(r, reqID)
 	w.WriteHeader(status)
 	w.Write(resp)
+
+	e.log.Debug(fmt.Sprintf(msgRequestDone, reqID))
 }
 
 // @Summary		Удалить песню
@@ -74,7 +80,7 @@ func (e *Endpoint) HandlerAddSong(w http.ResponseWriter, r *http.Request) {
 func (e *Endpoint) HandlerDeleteSong(w http.ResponseWriter, r *http.Request) {
 	h := "HandlerDeleteSong"
 	reqID := requestID()
-	log.Printf(msgRequest, reqID, r.Method, r.URL, h)
+	e.log.Debug(fmt.Sprintf(msgRequest, reqID, r.Method, r.URL, h))
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	resp, status := e.process.ProseccDelSongRequest(r, reqID)
@@ -84,6 +90,8 @@ func (e *Endpoint) HandlerDeleteSong(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(status)
 	w.Write(resp)
+
+	e.log.Debug(fmt.Sprintf(msgRequestDone, reqID))
 }
 
 // @Summary		Получить текст песни
@@ -103,7 +111,7 @@ func (e *Endpoint) HandlerDeleteSong(w http.ResponseWriter, r *http.Request) {
 func (e *Endpoint) HandlerLiryc(w http.ResponseWriter, r *http.Request) {
 	h := "HandlerLiryc"
 	reqID := requestID()
-	log.Printf(msgRequest, reqID, r.Method, r.URL, h)
+	e.log.Debug(fmt.Sprintf(msgRequest, reqID, r.Method, r.URL, h))
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	resp, status := e.update.ProcessReadLirycsSongRequest(r, reqID)
@@ -113,6 +121,8 @@ func (e *Endpoint) HandlerLiryc(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(status)
 	w.Write(resp)
+
+	e.log.Debug(fmt.Sprintf(msgRequestDone, reqID))
 }
 
 // @Summary		Получить перечень песен
@@ -134,7 +144,7 @@ func (e *Endpoint) HandlerLiryc(w http.ResponseWriter, r *http.Request) {
 func (e *Endpoint) HandlerLibrary(w http.ResponseWriter, r *http.Request) {
 	h := "HandlerLibrary"
 	reqID := requestID()
-	log.Printf(msgRequest, reqID, r.Method, r.URL, h)
+	e.log.Debug(fmt.Sprintf(msgRequest, reqID, r.Method, r.URL, h))
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	resp, status := e.update.ProcessLibraryRequest(r, reqID)
@@ -144,6 +154,8 @@ func (e *Endpoint) HandlerLibrary(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(status)
 	w.Write(resp)
+
+	e.log.Debug(fmt.Sprintf(msgRequestDone, reqID))
 }
 
 // @Summary		Изменить параметры песни
@@ -163,7 +175,7 @@ func (e *Endpoint) HandlerLibrary(w http.ResponseWriter, r *http.Request) {
 func (e *Endpoint) HandlerPatchSong(w http.ResponseWriter, r *http.Request) {
 	h := "HandlerPatchSong"
 	reqID := requestID()
-	log.Printf(msgRequest, reqID, r.Method, r.URL, h)
+	e.log.Debug(fmt.Sprintf(msgRequest, reqID, r.Method, r.URL, h))
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	resp, status := e.update.ProcessUpdateSongRequest(r, reqID)
@@ -173,6 +185,8 @@ func (e *Endpoint) HandlerPatchSong(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(status)
 	w.Write(resp)
+
+	e.log.Debug(fmt.Sprintf(msgRequestDone, reqID))
 }
 
 func requestID() string {

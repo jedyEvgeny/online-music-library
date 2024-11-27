@@ -67,6 +67,12 @@ const (
 )
 
 const (
+	logErrValidate = "[%s] запрос не прошёл валидацию: %s"
+	logToEndpoin   = "[%s] подготовлен ответ со статусом: %d"
+	logAnswDB      = "Ответ БД. Статус: %d, ошибка: %v\n"
+)
+
+const (
 	errMarshalJson = "ошибка создания json-объекта: %v"
 	errDecodeJson  = "ошибка декодирования json-объекта"
 	errMethod      = "ошибка метода. Ожидался: %s, имеется: %s"

@@ -15,31 +15,35 @@ import (
 func (s *Service) ProcessUpdateSongRequest(r *http.Request, requestID string) ([]byte, int) {
 	defer closeRequestBody(r.Body)
 
-	data, idSong, statusCode, errResponse := validatePatchSongRequest(r, requestID)
+	data, idSong, statusCode, errResponse := s.validatePatchSongRequest(r, requestID)
 	if statusCode != http.StatusOK {
+		s.log.Debug(fmt.Sprintf(logErrValidate, requestID, string(errResponse)))
 		return errResponse, statusCode
 	}
+
 	response, statusCode := s.updSongInStorage(data, idSong, requestID)
+
+	s.log.Debug(fmt.Sprintf(logToEndpoin, requestID, statusCode))
 	return response, statusCode
 }
 
-func validatePatchSongRequest(r *http.Request, requestID string) (*EnrichedSong, int, int, []byte) {
+func (s *Service) validatePatchSongRequest(r *http.Request, requestID string) (*EnrichedSong, int, int, []byte) {
 	if r.Method != http.MethodPatch {
 		msg := fmt.Sprintf(errMethod, http.MethodPatch, r.Method)
-		dataJson, statusCode := createPatchDelSongResponse(
+		dataJson, statusCode := s.createPatchDelSongResponse(
 			false, http.StatusMethodNotAllowed, msg, requestID)
 		return nil, 0, statusCode, dataJson
 	}
 
 	req, idSong, err := decodeBodyPatchSongRequest(r)
 	if err != nil {
-		dataJson, statusCode := createPatchDelSongResponse(
+		dataJson, statusCode := s.createPatchDelSongResponse(
 			false, http.StatusBadRequest, fmt.Sprint(err), requestID)
 		return nil, 0, statusCode, dataJson
 	}
 
 	if err := validateBodyPatchSongRequest(req); err != nil {
-		dataJson, statusCode := createPatchDelSongResponse(
+		dataJson, statusCode := s.createPatchDelSongResponse(
 			false, http.StatusBadRequest, fmt.Sprint(err), requestID)
 		return nil, 0, statusCode, dataJson
 	}
@@ -117,15 +121,14 @@ func validateBodyPatchSongRequest(req *EnrichedSong) error {
 	return nil
 }
 
-// func (db *DataBase) Update(song *service.EnrichedSong, songID int, requestID string) (statusCode int, err error) {
 func (s *Service) updSongInStorage(req *EnrichedSong, songID int, requestID string) ([]byte, int) {
 	statusCode, err := s.delUpdater.Update(req, songID, requestID)
 	if err != nil {
-		dataJson, statusCode := createPatchDelSongResponse(
+		dataJson, statusCode := s.createPatchDelSongResponse(
 			false, statusCode, fmt.Sprint(err), requestID)
 		return dataJson, statusCode
 	}
-	dataJson, statusCode := createPatchDelSongResponse(
+	dataJson, statusCode := s.createPatchDelSongResponse(
 		true, statusCode, msg200Upd, requestID)
 	return dataJson, statusCode
 }

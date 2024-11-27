@@ -1,6 +1,7 @@
 package service
 
 import (
+	"jedyEvgeny/online-music-library/pkg/logger"
 	"net/http"
 )
 
@@ -16,17 +17,19 @@ type DelUpdater interface {
 }
 
 type Enricher interface {
-	Update(*Song) (*http.Response, error)
+	Update(*Song, string) (*http.Response, error)
 }
 
 type Service struct {
+	log        *logger.Logger
 	repository WriteReader
 	enricher   Enricher
 	delUpdater DelUpdater
 }
 
-func New(w WriteReader, e Enricher, d DelUpdater) *Service {
+func New(l *logger.Logger, w WriteReader, e Enricher, d DelUpdater) *Service {
 	return &Service{
+		log:        l,
 		repository: w,
 		enricher:   e,
 		delUpdater: d,

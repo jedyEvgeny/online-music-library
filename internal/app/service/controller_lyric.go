@@ -15,29 +15,33 @@ import (
 func (s *Service) ProcessReadLirycsSongRequest(r *http.Request, requestID string) ([]byte, int) {
 	defer closeRequestBody(r.Body)
 
-	reqParam, statusCode, errResponse := validateReadLirycsRequest(r, requestID)
+	reqParam, statusCode, errResponse := s.validateReadLirycsRequest(r, requestID)
 	if statusCode != http.StatusOK {
+		s.log.Debug(fmt.Sprintf(logErrValidate, requestID, string(errResponse)))
 		return errResponse, statusCode
 	}
 
 	liryc, statusCode, err := s.repository.ReadLirycs(reqParam.idSong, requestID)
+	s.log.Debug(fmt.Sprintf(logAnswDB, statusCode, err))
 	if err != nil {
-		dataJson, statusCode := createLirycsResponse(
+		dataJson, statusCode := s.createLirycsResponse(
 			false, statusCode, fmt.Sprint(err), requestID, nil)
 		return dataJson, statusCode
 	}
 
 	lirycs := createSliceLirycs(liryc, reqParam)
 
-	dataJson, statusCode := createLirycsResponse(
+	dataJson, statusCode := s.createLirycsResponse(
 		true, http.StatusOK, msg200, requestID, &lirycs)
+
+	s.log.Debug(fmt.Sprintf(logToEndpoin, requestID, statusCode))
 	return dataJson, statusCode
 }
 
-func validateReadLirycsRequest(r *http.Request, requestID string) (*paggination, int, []byte) {
+func (s *Service) validateReadLirycsRequest(r *http.Request, requestID string) (*paggination, int, []byte) {
 	if r.Method != http.MethodGet {
 		msg := fmt.Sprintf(errMethod, http.MethodGet, r.Method)
-		dataJson, statusCode := createAddSongResponse(
+		dataJson, statusCode := s.createAddSongResponse(
 			false, http.StatusMethodNotAllowed, msg, requestID, nil)
 		return nil, statusCode, dataJson
 	}
@@ -46,7 +50,7 @@ func validateReadLirycsRequest(r *http.Request, requestID string) (*paggination,
 
 	err := param.validateLyricsParamsRequest()
 	if err != nil {
-		dataJson, statusCode := createLirycsResponse(
+		dataJson, statusCode := s.createLirycsResponse(
 			false, http.StatusBadRequest, fmt.Sprint(err), requestID, nil)
 		return nil, statusCode, dataJson
 	}
@@ -117,8 +121,8 @@ func (p *paggination) validateLyricsParamsRequest() error {
 	return nil
 }
 
-func createLirycsResponse(ok bool, statusCode int, msg, requestID string, lirycs *[]string) ([]byte, int) {
-	log.Printf("[%s]  %s\n", requestID, msg)
+func (s *Service) createLirycsResponse(ok bool, statusCode int, msg, requestID string, lirycs *[]string) ([]byte, int) {
+	s.log.Debug(fmt.Sprintf("[%s]  %s\n", requestID, msg))
 	resp := ResponseLirycs{
 		Sucsess:    ok,
 		Message:    msg,

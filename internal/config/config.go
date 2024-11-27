@@ -10,8 +10,9 @@ import (
 
 type Config struct {
 	Server struct {
-		Port string `env:"SERVER_PORT" env-default:"7777" env-description:"Порт сервера"`
-		Host string `env:"SERVER_HOST" env-default:"localhost" env-description:"Хост сервера"`
+		Port     string `env:"SERVER_PORT" env-default:"7777" env-description:"Порт сервера"`
+		Host     string `env:"SERVER_HOST" env-default:"localhost" env-description:"Хост сервера"`
+		LogLevel string `env:"SERVER_LEVEL_LOG" env-default:"info" env-description:"Уровень логирования"`
 	}
 
 	Client struct {

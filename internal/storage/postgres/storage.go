@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"jedyEvgeny/online-music-library/internal/config"
+	"jedyEvgeny/online-music-library/pkg/logger"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
@@ -21,8 +22,8 @@ type DataBase struct {
 
 const dirMigrations = "migrations"
 
-func MustNew(cfg *config.Config) *DataBase {
-	db, err := runDB(cfg)
+func MustNew(cfg *config.Config, logger *logger.Logger) *DataBase {
+	db, err := runDB(cfg, logger)
 	if err != nil {
 		log.Fatalf(errCreateDB, err)
 	}
@@ -31,7 +32,7 @@ func MustNew(cfg *config.Config) *DataBase {
 	}
 }
 
-func runDB(cfg *config.Config) (*sql.DB, error) {
+func runDB(cfg *config.Config, logger *logger.Logger) (*sql.DB, error) {
 	connName := createConnStr(cfg)
 	db, err := sql.Open(cfg.Database.Type, connName)
 	if err != nil {
@@ -59,9 +60,9 @@ func runDB(cfg *config.Config) (*sql.DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf(errPing, connName, err)
 	}
-	log.Printf(msgTimePing, connName, tEndPing.Sub(tStartPing))
+	logger.Debug(fmt.Sprintf(msgTimePing, connName, tEndPing.Sub(tStartPing)))
 
-	err = runMigrate(cfg, db)
+	err = runMigrate(cfg, db, logger)
 	if err != nil {
 		return nil, fmt.Errorf(errLaunchMigrations, connName, err)
 	}
@@ -80,7 +81,7 @@ func createConnStr(cfg *config.Config) string {
 
 }
 
-func runMigrate(cfg *config.Config, db *sql.DB) error {
+func runMigrate(cfg *config.Config, db *sql.DB, logger *logger.Logger) error {
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
 		return fmt.Errorf(errDriver, err)
@@ -109,9 +110,9 @@ func runMigrate(cfg *config.Config, db *sql.DB) error {
 	}
 
 	if err == migrate.ErrNoChange {
-		log.Println(msgMigrationsNotNeed)
+		logger.Info(msgMigrationsNotNeed)
 	} else {
-		log.Println(msgMigrationsDone)
+		logger.Info(msgMigrationsDone)
 	}
 
 	return nil

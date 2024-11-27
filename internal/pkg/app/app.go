@@ -7,13 +7,14 @@ import (
 	"jedyEvgeny/online-music-library/internal/app/service"
 	"jedyEvgeny/online-music-library/internal/config"
 	storage "jedyEvgeny/online-music-library/internal/storage/postgres"
-	"log"
+	"jedyEvgeny/online-music-library/pkg/logger"
 	"net/http"
 	"strings"
 )
 
 type App struct {
 	cfg         *config.Config
+	log         *logger.Logger
 	db          *storage.DataBase
 	client      *client.Client
 	service     *service.Service
@@ -25,14 +26,16 @@ type App struct {
 func New() *App {
 	a := &App{}
 	a.cfg = config.MustLoad()
-	a.db = storage.MustNew(a.cfg)
+	a.log = logger.New(a.cfg.Server.LogLevel)
+
+	a.db = storage.MustNew(a.cfg, a.log)
 
 	a.routeClient = newRouteClient()
 	a.routeServer = newRouteServer()
 
-	a.client = client.New(a.cfg.Client.Host, a.cfg.Client.Port, a.routeClient.GetSong)
-	a.service = service.New(a.db, a.client, a.db)
-	a.endpoint = endpoint.New(a.service, a.service)
+	a.client = client.New(a.cfg.Client.Host, a.cfg.Client.Port, a.log, a.routeClient.GetSong)
+	a.service = service.New(a.log, a.db, a.client, a.db)
+	a.endpoint = endpoint.New(a.log, a.service, a.service)
 
 	return a
 }
@@ -40,16 +43,14 @@ func New() *App {
 func (a *App) Run() error {
 	defer func() {
 		if err := a.db.Close(); err != nil {
-			//Лог инфо
-			log.Printf("Ошибка при закрытии базы данных: %v", err)
+			a.log.Info(fmt.Sprintf("Ошибка при закрытии базы данных: %v", err))
 		}
 	}()
 
 	a.configureRoutes()
 
-	//Лог инфо
-	log.Printf("Запустили сервер на хосте: %s и порту: %s\n%s\n",
-		a.cfg.Server.Host, a.cfg.Server.Port, strings.Repeat("-", 70))
+	a.log.Info(fmt.Sprintf("Запустили сервер на хосте: %s и порту: %s\n%s\n",
+		a.cfg.Server.Host, a.cfg.Server.Port, strings.Repeat("-", 78)))
 
 	err := http.ListenAndServe(a.serverAdress(), nil)
 	if err != nil {
